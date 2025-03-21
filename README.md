@@ -1,7 +1,9 @@
-# TEMPLATE
+# WINDOWED
 
-> Project Short Description
+> C++17 window wrapper based on GLFW library
 
-Project Long Overview
+## Versions
+
+- `v0.0.1` - cmake wrapper interface library for check/find/fetch glfw target
 
 ###### each folder MAY contain README with additional information about project
