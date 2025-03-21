@@ -5,5 +5,3 @@ set( SON8PROJ son8__${PROJECT_NAME} )
 
 add_subdirectory( source )
 add_library( son8::${PROJECT_NAME} ALIAS ${SON8PROJ} )
-
-add_subdirectory( temp )
