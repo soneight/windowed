@@ -7,7 +7,7 @@ add_library( ${SON8PROJ} INTERFACE )
 
 if( NOT TARGET glfw )
     message( STATUS "${SON8PROJ}: `glfw` target does not exist try to find it" )
-    find_package( glfw3 )
+    find_package( glfw3 QUIET )
     if( NOT glfw3_FOUND )
         message( STATUS "${SON8PROJ}: `glfw3_FOUND` is not set, try to fetch it from son8fork" )
         include( FetchContent )
