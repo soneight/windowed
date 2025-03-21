@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.14...3.28 )
-project( windowed VERSION 0.0.0 LANGUAGES CXX )
+project( windowed VERSION 0.0.1 LANGUAGES CXX )
 
 set( SON8PROJ son8__${PROJECT_NAME} )
 
