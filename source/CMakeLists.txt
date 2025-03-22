@@ -22,4 +22,15 @@ if( NOT TARGET glfw )
     endif()
 endif()
 
-target_link_libraries( ${SON8PROJ} PRIVATE glfw )
+if( NOT TARGET son8__overglad )
+    message( STATUS "${SON8PROJ}: `son8__overglad` target does not exist, fetching..." )
+    include( FetchContent )
+    FetchContent_Declare(
+        son8__overglad
+        GIT_REPOSITORY https://github.com/soneight/overglad.git
+        GIT_TAG        v0.0.1
+    )
+    FetchContent_MakeAvailable( son8__overglad )
+endif( )
+
+target_link_libraries( ${SON8PROJ} PRIVATE glfw son8::overglad )
