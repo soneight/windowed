@@ -11,7 +11,7 @@ namespace son8::windowed {
         GLFWwindow *window_;
     public:
         Impl_( ) {
-            if (!glfwInit( )) { throw std::runtime_error( "glfwInit() failed" ); }
+            if (!glfwInit( ) ) { throw std::runtime_error( "glfwInit() failed" ); }
 
             glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
             glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );

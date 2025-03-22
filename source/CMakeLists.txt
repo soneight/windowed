@@ -19,8 +19,8 @@ if( NOT TARGET glfw )
             GIT_TAG        son8fork-030310
         )
         FetchContent_MakeAvailable( glfw )
-    endif()
-endif()
+    endif( )
+endif( )
 
 if( NOT TARGET son8__overglad )
     message( STATUS "${SON8PROJ}: `son8__overglad` target does not exist, fetching..." )
