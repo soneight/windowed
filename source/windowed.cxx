@@ -10,14 +10,14 @@ namespace son8::windowed {
     class Windowed::Impl_ {
         GLFWwindow *window_;
     public:
-        Impl_( ) {
+        Impl_( Config const &config = { } ) {
             if (!glfwInit( ) ) { throw std::runtime_error( "glfwInit() failed" ); }
 
             glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
             glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
             glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
 
-            window_ = glfwCreateWindow( 640, 360, "", nullptr, nullptr );
+            window_ = glfwCreateWindow( config.width( ), config.height( ), config.title(), nullptr, nullptr );
             if ( !window_ ) {
                 glfwTerminate( );
                 throw std::runtime_error( "glfwCreateWindow() failed" );
@@ -33,7 +33,7 @@ namespace son8::windowed {
         auto window( ) const { return window_; }
     }; // class Windowed::Impl_
 
-    Windowed::Windowed( ) : impl_( std::make_unique< Impl_ >( ) ) { }
+    Windowed::Windowed( Config const &config ) : impl_( std::make_unique< Impl_ >( config ) ) { }
     Windowed::~Windowed( ) = default;
 
     bool Windowed::running( ) const {

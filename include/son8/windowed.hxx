@@ -1,6 +1,8 @@
 #ifndef SON8_WINDOWED_HXX
 #define SON8_WINDOWED_HXX
 
+#include "windowed/config.hxx"
+
 #include <memory>
 #include <utility>
 
@@ -12,7 +14,7 @@ namespace son8::windowed {
         bool running( ) const;
         void process( ) const;
     public:
-        Windowed( );
+        Windowed( Config const &config = { } );
         ~Windowed( );
         Windowed( Windowed&& ) = delete;
         Windowed( Windowed const& ) = delete;
