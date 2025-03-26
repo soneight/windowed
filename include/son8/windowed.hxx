@@ -6,6 +6,9 @@
 #include <memory>
 #include <utility>
 
+// forward declarations
+struct GLFWwindow;
+
 namespace son8::windowed {
     class Windowed {
         class Impl_;
@@ -20,6 +23,8 @@ namespace son8::windowed {
         Windowed( Windowed const& ) = delete;
         Windowed &operator=( Windowed && ) = delete;
         Windowed &operator=( Windowed const & ) = delete;
+
+        operator GLFWwindow *( ) const;
 
         template< typename Callback, typename ...Args >
         void run( Callback &&callback, Args &&...args ) {

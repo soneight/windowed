@@ -51,6 +51,10 @@ namespace son8::windowed {
     Windowed::Windowed( Config const &config ) : impl_( std::make_unique< Impl_ >( config ) ) { }
     Windowed::~Windowed( ) = default;
 
+    Windowed::operator GLFWwindow *( ) const {
+        return impl_->window( );
+    }
+
     bool Windowed::running( ) const {
         return !glfwWindowShouldClose( impl_->window( ) );
     }
