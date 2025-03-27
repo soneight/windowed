@@ -39,6 +39,8 @@ namespace son8::windowed {
             }
             glfwMakeContextCurrent( window_ );
             gladLoadGL( glfwGetProcAddress );
+            // TODO: add config option
+            glfwSwapInterval( 1 );
         }
         ~Impl_( ) {
             glfwDestroyWindow( window_ );
