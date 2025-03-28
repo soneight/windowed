@@ -8,11 +8,11 @@ target_sources( ${SON8PROJ} PRIVATE
 )
 
 if( NOT TARGET glfw )
-    message( STATUS "${SON8PROJ}: `glfw` target does not exist try to find it" )
+    message( STATUS "${SON8PROJ}: FindPackage `glfw3`" )
     find_package( glfw3 QUIET )
     if( NOT glfw3_FOUND )
-        message( STATUS "${SON8PROJ}: `glfw3_FOUND` is not set, try to fetch it from son8fork" )
         include( FetchContent )
+        message( STATUS "${SON8PROJ}: failed `glfw3_FOUND`, FetchContent `son8fork/glfw`" )
         FetchContent_Declare(
             glfw
             GIT_REPOSITORY https://github.com/son8fork/glfw.git
@@ -21,10 +21,11 @@ if( NOT TARGET glfw )
         FetchContent_MakeAvailable( glfw )
     endif( )
 endif( )
+message( STATUS "${SON8PROJ}: found `glfw` target" )
 
 if( NOT TARGET son8__overglad )
-    message( STATUS "${SON8PROJ}: `son8__overglad` target does not exist, fetching..." )
     include( FetchContent )
+    message( STATUS "${SON8PROJ}: FetchContent `soneight/overglad`" )
     FetchContent_Declare(
         son8__overglad
         GIT_REPOSITORY https://github.com/soneight/overglad.git
@@ -32,5 +33,6 @@ if( NOT TARGET son8__overglad )
     )
     FetchContent_MakeAvailable( son8__overglad )
 endif( )
+message( STATUS "${SON8PROJ}: found `son8__overglad` target" )
 
-target_link_libraries( ${SON8PROJ} PRIVATE glfw son8::overglad )
+target_link_libraries( ${SON8PROJ} PRIVATE glfw )
