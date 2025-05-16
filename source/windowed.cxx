@@ -23,6 +23,7 @@ namespace son8::windowed {
 
             glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, major );
             glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, minor );
+            glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
 
             auto profile_hint = []( auto val ) { glfwWindowHint( GLFW_OPENGL_PROFILE, val ); };
             switch ( version & 0xFFu ) {

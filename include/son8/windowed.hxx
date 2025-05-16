@@ -28,7 +28,7 @@ namespace son8::windowed {
 
         template< typename Callback, typename ...Args >
         void run( Callback &&callback, Args &&...args ) {
-            while (running( )) {
+            while ( running( ) ) {
                 std::forward< Callback >( callback )( std::forward< Args >( args )... );
                 process( );
             }
