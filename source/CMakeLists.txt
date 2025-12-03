@@ -16,7 +16,7 @@ if( NOT TARGET glfw )
         FetchContent_Declare(
             glfw
             GIT_REPOSITORY https://github.com/glfw/glfw.git
-            GIT_TAG        3.3.10
+            GIT_TAG        dc46d3f8129712e42856c20e99a604a3b08ad581 # 3.3.10
         )
         set( GLFW_BUILD_DOCS OFF )
         set( GLFW_BUILD_EXAMPLES OFF )
@@ -33,7 +33,7 @@ if( NOT TARGET son8__overglad )
     FetchContent_Declare(
         son8__overglad
         GIT_REPOSITORY https://github.com/soneight/overglad.git
-        GIT_TAG        v0.0.1
+        GIT_TAG        a53f5016ea52f2cedf802c6bb58ccdc295ba219a # v0.0.1
     )
     FetchContent_MakeAvailable( son8__overglad )
 endif( )

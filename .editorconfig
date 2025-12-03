@@ -1,5 +1,5 @@
 root = true
-[*.{txt,mxx,ixx,cxx,hxx,cpp,hpp,cc,hh,c,h}]
+[*.{md,txt,cxx,hxx,cpp,hpp,cc,hh}]
 charset = utf-8
 end_of_line = lf
 indent_size = 4
