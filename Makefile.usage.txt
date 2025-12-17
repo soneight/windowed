@@ -7,4 +7,3 @@
     allin: (clean->cmake->ninja->ctest)
     build: (cmake->ninja)
     tests: (ninja->ctest)
-
