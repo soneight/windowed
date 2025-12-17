@@ -3,21 +3,16 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_CXX_EXTENSIONS OFF )
 
 add_library( ${SON8PROJ} INTERFACE )
-# target_sources(${SON8PROJ})
 
-if( NOT TARGET glfw )
-    message( STATUS "${SON8PROJ}: `glfw` target does not exist try to find it" )
-    find_package( glfw3 QUIET )
-    if( NOT glfw3_FOUND )
-        message( STATUS "${SON8PROJ}: `glfw3_FOUND` is not set, try to fetch it from son8fork" )
-        include( FetchContent )
-        FetchContent_Declare(
-            glfw
-            GIT_REPOSITORY https://github.com/son8fork/glfw.git
-            GIT_TAG        son8fork-030310
-        )
-        FetchContent_MakeAvailable( glfw )
-    endif()
-endif()
+if( NOT TARGET son8__overglad )
+    include( FetchContent )
+    message( STATUS "${SON8PROJ}: FetchContent `soneight/overglad`" )
+    FetchContent_Declare(
+        son8__overglad
+        GIT_REPOSITORY https://github.com/soneight/overglad.git
+        GIT_TAG        8751de77e6f5a6fb1e87e724bd842446ec48c696 # v0.0.4
+    )
+    FetchContent_MakeAvailable( son8__overglad )
+endif( )
+message( STATUS "${SON8PROJ}: found `son8__overglad` target" )
 
-target_link_libraries( ${SON8PROJ} INTERFACE glfw )
