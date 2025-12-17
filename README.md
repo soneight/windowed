@@ -4,6 +4,6 @@
 
 ## Versions
 
-- `v0.0.1` - cmake wrapper interface library for check/find/fetch glfw target
+- `v0.0.2` - cmake wrapper interface library for check/find/fetch glfw target with glad support
 
-###### each folder MAY contain README with additional information about project
+###### each folder MAY contain README with additional materials
