@@ -9,5 +9,3 @@ target_compile_options( ${SON8PROJ} INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/utf-8 /
 
 add_subdirectory( glfw )
 target_link_libraries( ${SON8PROJ} INTERFACE glfw::son8 son8::overglad )
-
-add_subdirectory( temp )
