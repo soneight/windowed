@@ -1,6 +1,6 @@
 #include <son8/windowed.hxx>
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+
+#include <glfw/son8.hxx>
 #include <glad/son8/loader.h>
 
 #include <stdexcept>
