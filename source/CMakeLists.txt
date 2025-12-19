@@ -10,7 +10,7 @@ if( NOT TARGET son8__overglad )
     FetchContent_Declare(
         son8__overglad
         GIT_REPOSITORY https://github.com/soneight/overglad.git
-        GIT_TAG        8751de77e6f5a6fb1e87e724bd842446ec48c696 # v0.0.4
+        GIT_TAG        b3679065419d626099062101416249ee5b8ebac2 # v0.0.5
     )
     FetchContent_MakeAvailable( son8__overglad )
 endif( )
