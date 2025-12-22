@@ -1,17 +1,17 @@
 #include <son8/windowed.hxx>
-
-#include <glfw/son8.hxx>
-#include <glad/son8/loader.h>
-
-#include <stdexcept>
+// son8
+#include <glfw/son8.hxx> // GLFWwindow, glfw*
+#include <glad/son8/loader.h> // gladLoadGL
+// std
+#include <stdexcept> // runtime_error
 
 namespace son8::windowed {
 
-    class Windowed::Impl_ {
+    class Window::Impl_ {
         GLFWwindow *window_;
     public:
         Impl_( Config const &config = { } ) {
-            if (!glfwInit( ) ) { throw std::runtime_error( "glfwInit() failed" ); }
+            if ( !glfwInit( ) ) { throw std::runtime_error( "son8::windowed: glfwInit() failed" ); }
 
             auto version = config.version( );
             auto major = version >> 16;
@@ -27,16 +27,16 @@ namespace son8::windowed {
 
             auto profile_hint = []( auto val ) { glfwWindowHint( GLFW_OPENGL_PROFILE, val ); };
             switch ( version & 0xFFu ) {
-                case 0xCBu: profile_hint(GLFW_OPENGL_COMPAT_PROFILE); break;
-                case 0xCEu: profile_hint(GLFW_OPENGL_CORE_PROFILE); break;
+                case 0xCBu: profile_hint( GLFW_OPENGL_COMPAT_PROFILE ); break;
+                case 0xCEu: profile_hint( GLFW_OPENGL_CORE_PROFILE ); break;
                 case 0x00u: break; // unspecified behavior, use GLFW default
                 default: throw std::runtime_error( "son8::windowed: config version OpenGL profile mismatch" );
             }
 
-            window_ = glfwCreateWindow( config.width( ), config.height( ), config.title(), nullptr, nullptr );
+            window_ = glfwCreateWindow( config.width( ), config.height( ), config.title( ), nullptr, nullptr );
             if ( !window_ ) {
                 glfwTerminate( );
-                throw std::runtime_error( "glfwCreateWindow() failed" );
+                throw std::runtime_error( "son::windowed: glfwCreateWindow() failed" );
             }
             glfwMakeContextCurrent( window_ );
             gladLoadGL( glfwGetProcAddress );
@@ -49,20 +49,20 @@ namespace son8::windowed {
         }
 
         auto window( ) const { return window_; }
-    }; // class Windowed::Impl_
+    }; // class Window::Impl_
 
-    Windowed::Windowed( Config const &config ) : impl_( std::make_unique< Impl_ >( config ) ) { }
-    Windowed::~Windowed( ) = default;
+    Window::Window( Config const &config ) : impl_( std::make_unique< Impl_ >( config ) ) { }
+    Window::~Window( ) = default;
 
-    Windowed::operator GLFWwindow *( ) const {
+    Window::operator GLFWwindow *( ) const {
         return impl_->window( );
     }
 
-    bool Windowed::running( ) const {
+    bool Window::running( ) const {
         return !glfwWindowShouldClose( impl_->window( ) );
     }
 
-    void Windowed::process( ) const {
+    void Window::process( ) const {
         glfwPollEvents( );
         glfwSwapBuffers( impl_->window( ) );
     }
