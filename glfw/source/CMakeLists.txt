@@ -1,11 +1,11 @@
 add_library( glfw__son8 INTERFACE )
 
 if( NOT TARGET glfw )
-    message( STATUS "${SON8PROJ}: FindPackage `glfw3`" )
+    message( STATUS "${SON8_LIB}: FindPackage `glfw3`" )
     find_package( glfw3 QUIET )
     if( NOT glfw3_FOUND )
         include( FetchContent )
-        message( STATUS "${SON8PROJ}: failed `glfw3_FOUND`, FetchContent `glfw/glfw`" )
+        message( STATUS "${SON8_LIB}: failed `glfw3_FOUND`, FetchContent `glfw/glfw`" )
         FetchContent_Declare(
             glfw
             GIT_REPOSITORY https://github.com/glfw/glfw.git
@@ -18,4 +18,10 @@ if( NOT TARGET glfw )
         FetchContent_MakeAvailable( glfw )
     endif( )
 endif( )
-message( STATUS "${SON8PROJ}: found `glfw` target" )
+message( STATUS "${SON8_LIB}: found `glfw` target" )
+
+# Apache License 2.0
+# NO WARRANTY OF ANY KIND see <http://www.apache.org/licenses/LICENSE-2.0>
+# SPDX-License-Identifier: Apache-2.0
+# lib: `windowed` C++17 Overglad GLFW Based Window
+# Ⓒ Copyright (c) 2025-2026 Oleg'Ease'Kharchuk ᦒ

@@ -1,9 +1,15 @@
 # WINDOWED
+> C++17 Overglad GLFW Based Window
 
-> C++17 window wrapper based on GLFW library
+## Branches
 
-## Versions
+- `glfw` - only cmake wrapper interface library for check/find/fetch glfw target with glad support
+- `main` - same as `glfw` branch plus windowed Config and Window classes to relax window creation
 
-- `v0.0.2` - cmake wrapper interface library for check/find/fetch glfw target with glad support
+## [CONTRIBUTING](./CONTRIBUTING.md)
+> Project Contribution Rules
+
+## [LICENSE](./LICENSE) [Apache-2.0](./LICENSE.Apache-2.0.md) [NOTICE](./NOTICE)
+> Project Copying Rules with attribution notice
 
 ###### each folder MAY contain README with additional materials
