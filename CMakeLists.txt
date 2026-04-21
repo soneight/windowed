@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 3.14...3.27 )
-project( windowed VERSION 0.3.0 LANGUAGES CXX )
+project( windowed VERSION 0.4.0 LANGUAGES CXX )
 set( SON8_LIB son8__${PROJECT_NAME} )
 add_subdirectory( glfw )
 # Private configuration under source directory
