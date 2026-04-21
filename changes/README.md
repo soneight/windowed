@@ -15,7 +15,7 @@
 - license from `BSL-1.0` to `Apache-2.0`
 - bump default fetching `overglad` version to patch 6
 
-### v0.0.3 - 2025-12-20
+### v0.0.3 - 2025-12-20 IMPORTANT seems to be kind of broken because not appearing in git log
 > cmake minimum required maximum 3.27, fetching `overglad` patch 5 instead patch 4
 
 ### v0.0.2 - 2025-12-18
