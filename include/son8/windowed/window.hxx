@@ -38,4 +38,8 @@ namespace son8::windowed {
 
 #endif//SON8_WINDOWED_WINDOW_HXX
 
-// Ⓒ 2025 Oleg'Ease'Kharchuk ᦒ
+// Apache License 2.0
+// NO WARRANTY OF ANY KIND see <http://www.apache.org/licenses/LICENSE-2.0>
+// SPDX-License-Identifier: Apache-2.0
+// lib: `windowed` C++17 Overglad GLFW Based Window
+// Ⓒ Copyright (c) 2025-2026 Oleg'Ease'Kharchuk ᦒ
