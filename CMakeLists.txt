@@ -7,7 +7,7 @@ add_subdirectory( source )
 add_library( son8::${PROJECT_NAME} ALIAS ${SON8_LIB} )
 target_compile_features( ${SON8_LIB} PUBLIC cxx_std_17 )
 target_include_directories( ${SON8_LIB} PUBLIC include )
-target_compile_options( ${SON8_LIB} INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/utf-8 /permissive- /Zc:__cplusplus> )
+target_compile_options( ${SON8_LIB} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/utf-8 /permissive- /Zc:__cplusplus> )
 
 target_link_libraries( ${SON8_LIB} PUBLIC son8::overglad )
 
