@@ -3,8 +3,8 @@
 
 ## Branches
 
-- `glfw` - only cmake wrapper interface library for check/find/fetch glfw target with glad support
-- `main` - same as `glfw` branch plus windowed Config and Window classes to relax window creation
+- `glfw` - versions 0.0.*, only cmake wrapper interface library to find `glfw` target
+- `main` - versions 0.1+, Config and Window classes to relax `glfw` window creation
 
 ## [CONTRIBUTING](./CONTRIBUTING.md)
 > Project Contribution Rules
