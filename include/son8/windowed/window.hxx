@@ -10,12 +10,13 @@
 struct GLFWwindow;
 
 namespace son8::windowed {
+
     class Window {
         class Impl_;
         std::unique_ptr< Impl_ > impl_;
         bool is_Init_OpenGL( ) const;
-        static constexpr bool is_Poll_Events( unsigned flags ) { return ~flags & Run_Bitfield_No_Poll; }
-        static constexpr bool is_Swap_Buffer( unsigned flags ) { return ~flags & Run_Bitfield_No_Swap; }
+        static constexpr bool is_Poll_Events( unsigned flags ) { return ~flags & Without::Poll_Events; }
+        static constexpr bool is_Swap_Buffer( unsigned flags ) { return ~flags & Without::Swap_Buffer; }
     public:
         Window( Config const &config = { } );
         ~Window( );
@@ -26,27 +27,31 @@ namespace son8::windowed {
 
         operator GLFWwindow *( ) const;
 
-        static inline constexpr unsigned Run_Bitfield_No_Poll = 1u << 0u; // 1
-        static inline constexpr unsigned Run_Bitfield_No_Swap = 1u << 1u; // 2
+        struct Without {
+            static inline constexpr unsigned Poll_Events = 1u << 0u; // 1
+            static inline constexpr unsigned Swap_Buffer = 1u << 1u; // 2
+        };
 
         bool is_closing( ) const;
         void init_opengl( );
+        void free_opengl( );
         void poll_events( ) const;
         void swap_buffer( ) const;
 
-        template< unsigned runBitfield = 0u, typename Callback, typename ...Args >
+        template< unsigned without = 0u, typename Callback, typename ...Args >
         void run( Callback &&callback, Args &&...args ) {
-            if constexpr ( is_Swap_Buffer( runBitfield ) ) {
-                if ( not is_Init_OpenGL( ) ) init_opengl( );
-            }
+            if constexpr ( is_Swap_Buffer( without ) ) init_opengl( );
 
             while ( not is_closing( ) ) {
-                if constexpr ( is_Poll_Events( runBitfield ) ) poll_events( );
+                if constexpr ( is_Poll_Events( without ) ) poll_events( );
                 std::forward< Callback >( callback )( std::forward< Args >( args )... );
-                if constexpr ( is_Swap_Buffer( runBitfield ) ) swap_buffer( );
+                if constexpr ( is_Swap_Buffer( without ) ) swap_buffer( );
             }
+
+            if constexpr ( is_Swap_Buffer( without ) ) free_opengl( );
         }
     }; // class Window
+
 } // namespace son8::windowed
 
 #endif//SON8_WINDOWED_WINDOW_HXX

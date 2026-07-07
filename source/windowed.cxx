@@ -3,6 +3,7 @@
 #include <glfw/son8.hxx> // GLFWwindow, glfw*
 #include <glad/son8/loader.h> // gladLoadGL
 // std
+#include <atomic>
 #include <stdexcept> // runtime_error
 
 namespace son8::windowed {
@@ -10,7 +11,7 @@ namespace son8::windowed {
     class Window::Impl_ {
         GLFWwindow *window_;
     public:
-        bool isInitOpenGL{ };
+        std::atomic< bool > isInitOpenGL{ };
         Impl_( Config const &config = { } ) {
             if ( not glfwInit( ) ) { throw std::runtime_error( "son8::windowed: glfwInit() failed" ); }
 
@@ -55,16 +56,23 @@ namespace son8::windowed {
         return impl_->window( );
     }
 
+    void Window::free_opengl( ) {
+        if ( not is_Init_OpenGL( ) ) return;
+        impl_->isInitOpenGL.store( false );
+        glfwMakeContextCurrent( nullptr );
+    }
+
     void Window::init_opengl( ) {
+        if ( is_Init_OpenGL( ) ) return;
+        impl_->isInitOpenGL.store( true );
         glfwMakeContextCurrent( impl_->window( ) );
         gladLoadGL( glfwGetProcAddress );
         // TODO: add config option
         glfwSwapInterval( 1 );
-        impl_->isInitOpenGL = true;
     }
 
     bool Window::is_Init_OpenGL( ) const {
-        return impl_->isInitOpenGL;
+        return impl_->isInitOpenGL.load( );
     }
 
     bool Window::is_closing( ) const {
