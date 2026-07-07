@@ -1,7 +1,7 @@
 #ifndef SON8_WINDOWED_CONFIG_HXX
 #define SON8_WINDOWED_CONFIG_HXX
 
-#include <cstddef>
+// #include <cstddef>
 #include <optional>
 #include <string>
 #include <utility>
@@ -15,6 +15,7 @@ namespace son8::windowed {
         Vx0303CE = 0x0303CEu,
         Vx0403CB = 0x0403CBu,
         Vx0403CE = 0x0403CEu,
+        Vx0406CB = 0x0406CBu,
         Vx0406CE = 0x0406CEu,
     }; // enum class OpenGL
 
@@ -32,7 +33,7 @@ namespace son8::windowed {
             operator char const *( ) const noexcept { return value.c_str( ); }
         } title_;
         struct Version_ final {
-            unsigned value{ 0x0406CBu };
+            unsigned value{ static_cast< unsigned >( OpenGL::Vx0406CB ) };
             Version_( ) = default;
             Version_( unsigned version ) noexcept : value{ version } { }
             Version_( OpenGL version ) noexcept : value{ static_cast< unsigned >( version ) } { }
