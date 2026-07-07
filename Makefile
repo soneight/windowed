@@ -1,14 +1,22 @@
 .PHONY: usage cmake ninja clean build allin
-# recipes
+# commands
 usage:
-	cat Makefile.usage.txt
+	@cat Makefile.usage.txt
 cmake:
-	cmake -B build/ -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	@echo "configuring project"
+	@cmake -B build/ -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 ninja:
-	ninja -C build/
+	@echo "generating project"
+	@ninja -C build/
 clean:
-	rm -rf build/ && git restore build/.gitignore
+	@echo "cleaning build directory"
+	@rm -rf build/
+	@git restore build/
 build:
-	make cmake && make ninja
+	@echo "configuring and generating project"
+	@make cmake
+	@make ninja
 allin:
-	make clean && make build
+	@echo "cleaning build directory and then configuring and generating project"
+	@make clean
+	@make build
