@@ -79,6 +79,10 @@ namespace son8::windowed {
         return glfwWindowShouldClose( impl_->window( ) );
     }
 
+    void Window::close( ) const {
+        glfwSetWindowShouldClose( impl_->window( ), GLFW_TRUE );
+    }
+
     void Window::poll_events( ) const {
         glfwPollEvents( );
     }
