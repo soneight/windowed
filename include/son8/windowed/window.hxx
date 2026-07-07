@@ -15,6 +15,7 @@ namespace son8::windowed {
         class Impl_;
         std::unique_ptr< Impl_ > impl_;
         bool is_Init_OpenGL( ) const;
+        void check_Poll_Main_Thread( ) const;
         static constexpr bool is_Poll_Events( unsigned flags ) { return ~flags & Without::Poll_Events; }
         static constexpr bool is_Swap_Buffer( unsigned flags ) { return ~flags & Without::Swap_Buffer; }
     public:
@@ -41,6 +42,8 @@ namespace son8::windowed {
         // generic run function, by default do all work useful in single threaded applications
         template< unsigned without = 0u, typename Callback, typename ...Args >
         void run( Callback &&callback, Args &&...args ) {
+            if constexpr ( is_Poll_Events( without ) ) check_Poll_Main_Thread( );
+
             if constexpr ( is_Swap_Buffer( without ) ) init_opengl( );
 
             while ( not is_closing( ) ) {

@@ -3,17 +3,28 @@
 #include <glfw/son8.hxx> // GLFWwindow, glfw*
 #include <glad/son8/loader.h> // gladLoadGL
 // std
-#include <atomic>
+#include <atomic> // atomic bool
+#include <cstddef> // size_t
 #include <stdexcept> // runtime_error
+#include <thread> // get_id( )
 
 namespace son8::windowed {
+
+    struct MainThread_ final {
+        std::thread::id id;
+        MainThread_( ) : id( std::this_thread::get_id( ) ) { }
+    };
+
+    static MainThread_ GlobalMainThread_{ };
+    static std::size_t GlobalWindowCount_{ };
 
     class Window::Impl_ {
         GLFWwindow *window_;
     public:
         std::atomic< bool > isInitOpenGL{ };
         Impl_( Config const &config = { } ) {
-            if ( not glfwInit( ) ) { throw std::runtime_error( "son8::windowed: glfwInit() failed" ); }
+            if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: create instances only allowed on main thread" );
+            if ( not GlobalWindowCount_ and not glfwInit( ) ) throw std::runtime_error( "son8::windowed: glfwInit() failed" );
 
             auto version = config.version( );
             auto major = version >> 16;
@@ -37,18 +48,22 @@ namespace son8::windowed {
 
             window_ = glfwCreateWindow( config.width( ), config.height( ), config.title( ), nullptr, nullptr );
             if ( not window_ ) {
-                glfwTerminate( );
+                if ( not GlobalWindowCount_ ) glfwTerminate( );
                 throw std::runtime_error( "son::windowed: glfwCreateWindow() failed" );
             }
+            ++GlobalWindowCount_;
         }
         ~Impl_( ) {
             glfwDestroyWindow( window_ );
-            glfwTerminate( );
+            --GlobalWindowCount_;
+            if ( not GlobalWindowCount_ ) glfwTerminate( );
         }
+
+        bool is_main_thread( ) const { return std::this_thread::get_id( ) == GlobalMainThread_.id; }
 
         auto window( ) const { return window_; }
     }; // class Window::Impl_
-
+    // window public implementation
     Window::Window( Config const &config ) : impl_( std::make_unique< Impl_ >( config ) ) { }
     Window::~Window( ) = default;
 
@@ -71,10 +86,6 @@ namespace son8::windowed {
         glfwSwapInterval( 1 );
     }
 
-    bool Window::is_Init_OpenGL( ) const {
-        return impl_->isInitOpenGL.load( );
-    }
-
     bool Window::is_closing( ) const {
         return glfwWindowShouldClose( impl_->window( ) );
     }
@@ -89,6 +100,15 @@ namespace son8::windowed {
 
     void Window::swap_buffer( ) const {
         glfwSwapBuffers( impl_->window( ) );
+    }
+    // window private implementation
+    // --
+    bool Window::is_Init_OpenGL( ) const {
+        return impl_->isInitOpenGL.load( );
+    }
+    // --
+    void Window::check_Poll_Main_Thread( ) const {
+        if ( not impl_->is_main_thread( ) ) throw std::runtime_error( "son8::windowed: poll events only allowed on main thread" );
     }
 
 } // namespace son8::windowed

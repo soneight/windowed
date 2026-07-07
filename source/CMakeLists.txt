@@ -2,7 +2,7 @@ set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_CXX_EXTENSIONS OFF )
 
-add_library( ${SON8_LIB} )
+add_library( ${SON8_LIB} STATIC )
 target_sources( ${SON8_LIB} PRIVATE
     windowed.cxx
 )

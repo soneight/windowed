@@ -45,16 +45,18 @@ int main( ) {
     std::thread draw( [&window]( ) {
         window.run_swap( [&window]( ) {
             app::draw( );
-            // by default calls `glfwSwapBuffers` here
+            // by default calls `glfwSwapBuffers` after function ends
         });
     });
-    window.run_poll( [&window]( ) { } );
+    window.run_poll( [&window]( ) {
+        // by default calls `glfwPollEvents` before function starts
+    });
     draw.join( );
 #else
     window.run( [&window]( ) {
-        // by default calls `glfwPollEvents` here
+        // by default calls `glfwPollEvents` before function starts
         app::draw( );
-        // by default calls `glfwSwapBuffers` here
+        // by default calls `glfwSwapBuffers` after function ends
     });
 #endif
 }
