@@ -5,17 +5,30 @@
 // std
 #include <atomic> // atomic bool
 #include <cstddef> // size_t
+#include <iostream> // cerr
 #include <stdexcept> // runtime_error
 #include <thread> // get_id( )
 
 namespace son8::windowed {
 
-    struct MainThread_ final {
-        std::thread::id id;
-        MainThread_( ) : id( std::this_thread::get_id( ) ) { }
-    };
 
-    static MainThread_ GlobalMainThread_{ };
+    namespace hide_ {
+
+        static std::thread::id &main_tread_id_ref( ) {
+            static std::thread::id id{ };
+            return id;
+        }
+
+        struct MainThreadId {
+            MainThreadId() {
+                auto &id = main_tread_id_ref( );
+                if ( id == std::thread::id{ } ) id = std::this_thread::get_id( );
+            }
+        };
+
+        static MainThreadId GlobalMainThreadId;
+    }
+
     static std::size_t GlobalWindowCount_{ };
 
     class Window::Impl_ {
@@ -24,6 +37,9 @@ namespace son8::windowed {
         std::atomic< bool > isInitOpenGL{ };
         Impl_( Config const &config = { } ) {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: create instances only allowed on main thread" );
+            glfwSetErrorCallback( []( int code, char const *desc ) {
+                std::cerr << "son8::windowed: glfwSetErrorCallback() code: " << code << ", description: " << desc << '\n';
+            });
             if ( not GlobalWindowCount_ and not glfwInit( ) ) throw std::runtime_error( "son8::windowed: glfwInit() failed" );
 
             auto version = config.version( );
@@ -59,7 +75,13 @@ namespace son8::windowed {
             if ( not GlobalWindowCount_ ) glfwTerminate( );
         }
 
-        bool is_main_thread( ) const { return std::this_thread::get_id( ) == GlobalMainThread_.id; }
+        bool is_main_thread( ) const {
+            auto &id = hide_::main_tread_id_ref( );
+
+            if ( id == std::thread::id{ } ) id = std::this_thread::get_id( );
+
+            return std::this_thread::get_id( ) == id;
+        }
 
         auto window( ) const { return window_; }
     }; // class Window::Impl_
