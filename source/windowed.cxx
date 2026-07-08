@@ -12,31 +12,33 @@
 namespace son8::windowed {
 
 
-    namespace hide_ {
+    namespace main_thread_ {
 
-        static std::thread::id &main_tread_id_ref( ) {
+        static std::thread::id &id_ref( ) {
             static std::thread::id id{ };
             return id;
         }
 
-        struct MainThreadId {
-            MainThreadId() {
-                auto &id = main_tread_id_ref( );
+        struct Id {
+            Id( ) {
+                auto &id = id_ref( );
                 if ( id == std::thread::id{ } ) id = std::this_thread::get_id( );
             }
         };
 
-        static MainThreadId GlobalMainThreadId;
+        static Id Global;
     }
 
     static std::size_t GlobalWindowCount_{ };
 
     class Window::Impl_ {
         GLFWwindow *window_;
+        static constexpr std::size_t Count_Max = 1u;
     public:
         std::atomic< bool > isInitOpenGL{ };
         Impl_( Config const &config = { } ) {
-            if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: create instances only allowed on main thread" );
+            if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: create Window instances only allowed on main thread" );
+            if ( Count_Max <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: only one window per process is allowed" );
             glfwSetErrorCallback( []( int code, char const *desc ) {
                 std::cerr << "son8::windowed: glfwSetErrorCallback() code: " << code << ", description: " << desc << '\n';
             });
@@ -44,7 +46,7 @@ namespace son8::windowed {
 
             auto version = config.version( );
             auto major = version >> 16;
-            if ( 1 > major or major > 4 ) throw std::runtime_error( "son8::windowed: config version OpenGL major mismatch" );
+            if ( 4 < major or major < 1 ) throw std::runtime_error( "son8::windowed: config version OpenGL major mismatch" );
             auto minor = ( version >> 8 ) & 0xFFu;
             auto skip = 0u;
             unsigned check_minor[] = { skip, 5u, 1u, 3u, 6u };
@@ -76,8 +78,11 @@ namespace son8::windowed {
         }
 
         bool is_main_thread( ) const {
-            auto &id = hide_::main_tread_id_ref( );
-
+            auto &id = main_thread_::id_ref( );
+            // NOTE: when window created globally without this check due
+            // \ to possible static (globals) objects out-order creation
+            // \ main thread Global id could be not initialized properly
+            // \ in case of background thread this check is always false
             if ( id == std::thread::id{ } ) id = std::this_thread::get_id( );
 
             return std::this_thread::get_id( ) == id;
