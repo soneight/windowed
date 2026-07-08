@@ -37,8 +37,8 @@ namespace son8::windowed {
     public:
         std::atomic< bool > isInitOpenGL{ };
         Impl_( Config const &config = { } ) {
-            if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: create Window instances only allowed on main thread" );
-            if ( Count_Max <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: only one window per process is allowed" );
+            if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
+            if ( Count_Max <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: Window requires only one instance per process" );
             glfwSetErrorCallback( []( int code, char const *desc ) {
                 std::cerr << "son8::windowed: glfwSetErrorCallback() code: " << code << ", description: " << desc << '\n';
             });
@@ -46,11 +46,11 @@ namespace son8::windowed {
 
             auto version = config.version( );
             auto major = version >> 16;
-            if ( 4 < major or major < 1 ) throw std::runtime_error( "son8::windowed: config version OpenGL major mismatch" );
+            if ( 4 < major or major < 1 ) throw std::runtime_error( "son8::windowed: Config requires valid OpenGL major version" );
             auto minor = ( version >> 8 ) & 0xFFu;
             auto skip = 0u;
             unsigned check_minor[] = { skip, 5u, 1u, 3u, 6u };
-            if ( check_minor[ major ] < minor ) throw std::runtime_error( "son8::windowed: config version OpenGL minor mismatch" );
+            if ( check_minor[ major ] < minor ) throw std::runtime_error( "son8::windowed: Config requires valid OpenGL minor version" );
 
             glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, major );
             glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, minor );
@@ -61,7 +61,7 @@ namespace son8::windowed {
                 case 0xCBu: profile_hint( GLFW_OPENGL_COMPAT_PROFILE ); break;
                 case 0xCEu: profile_hint( GLFW_OPENGL_CORE_PROFILE ); break;
                 case 0x00u: break; // unspecified behavior, use GLFW default
-                default: throw std::runtime_error( "son8::windowed: config version OpenGL profile mismatch" );
+                default: throw std::runtime_error( "son8::windowed: Config requires valid OpenGL profile, one of [00,CB,CE]" );
             }
 
             window_ = glfwCreateWindow( config.width( ), config.height( ), config.title( ), nullptr, nullptr );
@@ -108,7 +108,7 @@ namespace son8::windowed {
         if ( is_Init_OpenGL( ) ) return;
         impl_->isInitOpenGL.store( true );
         glfwMakeContextCurrent( impl_->window( ) );
-        gladLoadGL( glfwGetProcAddress );
+        if ( not gladLoadGL( glfwGetProcAddress ) ) throw std::runtime_error{ "son8::windowed: gladLoadGL() failed" };
         // TODO: add config option
         glfwSwapInterval( 1 );
     }
@@ -135,7 +135,7 @@ namespace son8::windowed {
     }
     // --
     void Window::check_Poll_Main_Thread( ) const {
-        if ( not impl_->is_main_thread( ) ) throw std::runtime_error( "son8::windowed: poll events only allowed on main thread" );
+        if ( not impl_->is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires poll events on main thread" );
     }
 
 } // namespace son8::windowed
