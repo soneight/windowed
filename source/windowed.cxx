@@ -26,6 +26,18 @@ namespace son8::windowed {
             }
         };
 
+        struct InitGLFW {
+            InitGLFW( ) {
+                if ( glfwInit( ) == GLFW_FALSE ) throw std::runtime_error( "son8::windowed: glfwInit() failed" );
+                glfwSetErrorCallback( []( int errc, char const *desc ) {
+                    std::cerr << "son8::windowed: glfwSetErrorCallback() code: " << errc << ", description: " << desc << '\n';
+                });
+            }
+           ~InitGLFW( ) {
+                glfwTerminate( );
+            }
+        };
+
         static Id Global;
     }
 
@@ -38,15 +50,13 @@ namespace son8::windowed {
         std::atomic< bool > isInitOpenGL{ };
         Impl_( Config const &config = { } ) {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
+            static main_thread_::InitGLFW InitGLFW;
             if ( Count_Max <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: Window requires only one instance per process" );
-            glfwSetErrorCallback( []( int code, char const *desc ) {
-                std::cerr << "son8::windowed: glfwSetErrorCallback() code: " << code << ", description: " << desc << '\n';
-            });
-            if ( not GlobalWindowCount_ and not glfwInit( ) ) throw std::runtime_error( "son8::windowed: glfwInit() failed" );
 
             auto version = config.version( );
             auto major = version >> 16;
             if ( 4 < major or major < 1 ) throw std::runtime_error( "son8::windowed: Config requires valid OpenGL major version" );
+
             auto minor = ( version >> 8 ) & 0xFFu;
             auto skip = 0u;
             unsigned check_minor[] = { skip, 5u, 1u, 3u, 6u };
@@ -65,16 +75,13 @@ namespace son8::windowed {
             }
 
             window_ = glfwCreateWindow( config.width( ), config.height( ), config.title( ), nullptr, nullptr );
-            if ( not window_ ) {
-                if ( not GlobalWindowCount_ ) glfwTerminate( );
-                throw std::runtime_error( "son::windowed: glfwCreateWindow() failed" );
-            }
+            if ( not window_ ) throw std::runtime_error( "son::windowed: glfwCreateWindow() failed" );
+
             ++GlobalWindowCount_;
         }
         ~Impl_( ) {
             glfwDestroyWindow( window_ );
             --GlobalWindowCount_;
-            if ( not GlobalWindowCount_ ) glfwTerminate( );
         }
 
         bool is_main_thread( ) const {
