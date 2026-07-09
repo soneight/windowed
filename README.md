@@ -3,19 +3,47 @@
 
 ## Branches
 
-- `glfw` - versions 0.0.*, only cmake wrapper interface library to find `glfw` target
+- `glfw` - versions 0.0.*, only CMake wrapper interface library to find `glfw` target
 - `main` - versions 0.1+, Config and Window classes to relax `glfw` window creation
 
 ## Usage
-> config and window headers are combined inside windowed header
 
-- [Config](./include/son8/windowed/config.hxx):
-  - by default create window with size `640x360` with opengl version `4.6 compatibility profile`
+### Targets
+> `CMake` related
 
-- [Window](./include/son8/windowed/window.hxx):
-  - requires to be created on main thread
-  - can only create single Window per process
-  - by default created with `VSync` on
+- `son8::windowed`
+- `glfw::son8`
+- `son8::overglad`
+- `glad::son8`
+
+### Headers
+> all other headers are combined inside `<son8/windowed.hxx>` header
+
+- [<son8/windowed/config.hxx>](./include/son8/windowed/config.hxx):
+  - constructor parameters for `Config` can be passed in any order and quantity, omitted values would have default values:
+    - `Version`: OpenGL version, either:
+      - predefined constants from OpenGL enum class
+      - hex formatted unsigned integer: 8 bit major, 8 bit minor, 8 bit profile (`CB` compatibility, `CE` core, `00` unspecified), like 0x010400, 0x020000, 0x0302CB, 0x0405CE
+    - `Title`: window title, internal data is `std::string`, passed to constructor like `Title{ "your title" }`, `Title{ your_string_convertible_variable }`, default empty string
+    - `Width` and `Height`: window `width/height`, internal data is unsigned, passed to constructor like `Width{ 400u }`, default `640u/360u`
+
+- [<son8/windowed/window.hxx>](./include/son8/windowed/window.hxx):
+  - enforce to be created on main thread
+  - enforce single `Window` per process
+  - by default created with `VSync` on (not configurable yet)
+  - only takes one constructor parameter which can be omitted (leads to creating window with size `640x360` and `OpenGL` version `4.6 compatibility profile`)
+  - public methods:
+    - `init_opengl`: initializing `OpenGL` by making window context current via `glfw` call and loading functions using `glad` loader
+    - `free_opengl`: free window current context via `glfw` call
+    - `swap_buffer`: calls `glfw` swap buffer function
+    - `poll_events`: calls `glfw` poll events function
+    - `close`: set `glfw` window should close to true
+    - `is_closing`: checks is window should close via `glfw` call
+  - templated `run*` blocking calling thread methods family (accepts callable function with variadic forwarding arguments until `is_closing` requested via `close` call):
+    - `run`: enforce `poll_events` only on main thread, manually calls `init_opengl` before loop and `free_opengl` after loop
+    - `run_poll`: calls `run` without `swap_buffer`, useful for splitting input processing and rendering logic
+    - `run_swap`: calls `run` without poll events, useful for processing `OpenGL` calls on background thread
+    - `run_void`: calls `run` that only call user provided function, use public methods to fine-tune a specific behavior
 
 ### Example
 > below is concise example that show different use cases
@@ -101,7 +129,7 @@ int main( ) {
     window.run_poll( []( ) { } );
     draw.join( );
 #else
-    window.run( [&window]( ) { // by default calls `glfwPollEvents` before function starts and `glfwSwapBuffers` after function ends
+    window.run( []( ) { // by default calls `glfwPollEvents` before function starts and `glfwSwapBuffers` after function ends
         app::draw( );
     });
 #endif
