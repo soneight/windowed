@@ -11,15 +11,17 @@
 ### Targets
 > `CMake` related
 
-- `son8::windowed`
-- `glfw::son8`
-- `son8::overglad`
-- `glad::son8`
+- `son8::windowed`: alias of `son8__windowed` target, this library privately link `glfw::son8`, and publicly link `son8::overglad`
+- `glfw::son8`: alias of `glfw__son8` target, to use `glfw` functionality needs to be linked
+- `son8::overglad`: alias of `son8__overglad` target, required for `glad` loader functionality which link interface `glad::son8`
+- `glad::son8`: alias of `glad__son8` target, linked by default with `son8::windowed`
 
 ### Headers
-> all other headers are combined inside `<son8/windowed.hxx>` header
+> all `windowed son8` headers are combined inside `<son8/windowed.hxx>` header
 
-- [<son8/windowed/config.hxx>](./include/son8/windowed/config.hxx):
+- [<glfw/son8.hxx>](./glfw/include/glfw/son8.hxx): simple wrapper header for inclusion `GLFW/glfw3.h` with defined `GLFW_INCLUDE_NONE`
+
+- [<son8/windowed/config.hxx>](./include/son8/windowed/config.hxx) (class `Config` and enum class `OpenGL`):
   - constructor parameters for `Config` can be passed in any order and quantity, omitted values would have default values:
     - `Version`: OpenGL version, either:
       - predefined constants from OpenGL enum class
@@ -27,13 +29,13 @@
     - `Title`: window title, internal data is `std::string`, passed to constructor like `Title{ "your title" }`, `Title{ your_string_convertible_variable }`, default empty string
     - `Width` and `Height`: window `width/height`, internal data is unsigned, passed to constructor like `Width{ 400u }`, default `640u/360u`
 
-- [<son8/windowed/window.hxx>](./include/son8/windowed/window.hxx):
+- [<son8/windowed/window.hxx>](./include/son8/windowed/window.hxx) (class `Window`):
   - enforce to be created on main thread
   - enforce single `Window` per process
   - by default created with `VSync` on (not configurable yet)
-  - only takes one constructor parameter which can be omitted (leads to creating window with size `640x360` and `OpenGL` version `4.6 compatibility profile`)
+  - only takes one constructor parameter `Config` which can be omitted (leads to creating window with size `640x360` and `OpenGL` version `4.6 compatibility profile`)
   - public methods:
-    - `init_opengl`: initializing `OpenGL` by making window context current via `glfw` call and loading functions using `glad` loader
+    - `init_opengl`: initializing `OpenGL` by making window context current via `glfw` call and loading functions using `glad` loader, throw standard runtime error exception when fail to load
     - `free_opengl`: free window current context via `glfw` call
     - `swap_buffer`: calls `glfw` swap buffer function
     - `poll_events`: calls `glfw` poll events function
