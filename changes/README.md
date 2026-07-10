@@ -3,6 +3,29 @@
 
 ## main branch
 
+### v0.5.0 - 2026-07-10
+
+#### Added
+
+- missing `OpenGL` constant for version `4.6 compatibility`
+- enforcing initializing `glfw`, creating windows and handling poll events only on main thread
+- enforcing `Window` count only to one per process
+- throwing exception if `glad` failed to load `OpenGL` functions
+- `Window` class public methods for handling buffer swapping, polling events, closing window and initializing `OpenGL` functions via `glad`
+- `Window` blocking run methods: `run_{poll,swap,void}` for fine-tunning behavior
+- `Window` `run` method now initializing `OpenGL` before loop and freeing it after loop
+
+#### Changed
+
+- use of `OpenGL` enum constant instead of plain unsigned for initializing default value
+- `Window` `method` loop now call poll events before user callback and swapping buffers after user callback
+- `CMake` library target is forced to be `STATIC`
+
+#### Removed
+
+- include `README` file was pointless
+
+
 ### v0.4.0 - 2026-04-22
 
 #### Added
