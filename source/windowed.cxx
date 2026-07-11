@@ -1,14 +1,14 @@
 #include <son8/windowed.hxx>
-// son8
+// `son8`
 #include <glfw/son8.hxx> // `GLFWwindow, glfw*`
 #include <glad/son8/loader.h> // `gladLoadGL`
-// std
-#include <atomic> // atomic bool
-#include <cstddef> // size_t
-#include <chrono> // duration
-#include <iostream> // cerr
-#include <stdexcept> // runtime_error
-#include <thread> // get_id( )
+// `std`
+#include <atomic> // `atomic bool`
+#include <cstddef> // `size_t`
+#include <chrono> // `duration`
+#include <iostream> // `cerr`
+#include <stdexcept> // `runtime_error`
+#include <thread> // `get_id( )`
 
 namespace son8::windowed {
 
@@ -49,7 +49,7 @@ namespace son8::windowed {
         GLFWwindow *window_;
         static constexpr std::size_t Count_Max = 1u;
     public:
-        static constexpr auto Poll_Linger_Duration = 1ms;
+        static constexpr std::chrono::duration Poll_Linger_Duration = 1ms;
         std::atomic< bool > isInitOpenGL{ };
         Impl_( Config const &config = { } ) {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
@@ -115,7 +115,7 @@ namespace son8::windowed {
     }
 
     void Window::init_opengl( ) {
-        if ( is_Init_OpenGL( ) ) return;
+        if ( is_Init_OpenGL( ) ) throw std::runtime_error{ "son8::windowed: Window::init_opengl() OpenGL is already initialized" };
         impl_->isInitOpenGL.store( true );
         glfwMakeContextCurrent( impl_->window( ) );
         if ( not gladLoadGL( glfwGetProcAddress ) ) throw std::runtime_error{ "son8::windowed: gladLoadGL() failed" };

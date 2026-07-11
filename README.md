@@ -19,9 +19,9 @@
 ### Headers
 > all `windowed son8` headers are combined inside `<son8/windowed.hxx>` header
 
-- [<glfw/son8.hxx>](./glfw/include/glfw/son8.hxx): simple wrapper header for inclusion `GLFW/glfw3.h` with defined `GLFW_INCLUDE_NONE`
+- `[<glfw/son8.hxx>](./glfw/include/glfw/son8.hxx)`: simple wrapper header for inclusion `GLFW/glfw3.h` with defined `GLFW_INCLUDE_NONE`
 
-- [<son8/windowed/config.hxx>](./include/son8/windowed/config.hxx) (class `Config` and enum class `OpenGL`):
+- `[<son8/windowed/config.hxx>](./include/son8/windowed/config.hxx)` (class `Config` and enum class `OpenGL`):
   - constructor parameters for `Config` can be passed in any order and quantity, omitted values would have default values:
     - `Version`: OpenGL version, either:
       - predefined constants from OpenGL enum class
@@ -29,7 +29,7 @@
     - `Title`: window title, internal data is `std::string`, passed to constructor like `Title{ "your title" }`, `Title{ your_string_convertible_variable }`, default empty string
     - `Width` and `Height`: window `width/height`, internal data is unsigned, passed to constructor like `Width{ 400u }`, default `640u/360u`
 
-- [<son8/windowed/window.hxx>](./include/son8/windowed/window.hxx) (class `Window`):
+- `[<son8/windowed/window.hxx>](./include/son8/windowed/window.hxx)` (class `Window`):
   - enforce to be created on main thread
   - enforce single `Window` per process
   - by default created with `VSync` on (not configurable yet)
