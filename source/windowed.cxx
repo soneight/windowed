@@ -1,16 +1,18 @@
 #include <son8/windowed.hxx>
 // son8
-#include <glfw/son8.hxx> // GLFWwindow, glfw*
-#include <glad/son8/loader.h> // gladLoadGL
+#include <glfw/son8.hxx> // `GLFWwindow, glfw*`
+#include <glad/son8/loader.h> // `gladLoadGL`
 // std
 #include <atomic> // atomic bool
 #include <cstddef> // size_t
+#include <chrono> // duration
 #include <iostream> // cerr
 #include <stdexcept> // runtime_error
 #include <thread> // get_id( )
 
 namespace son8::windowed {
 
+    using namespace std::chrono_literals;
 
     namespace main_thread_ {
 
@@ -47,6 +49,7 @@ namespace son8::windowed {
         GLFWwindow *window_;
         static constexpr std::size_t Count_Max = 1u;
     public:
+        static constexpr auto Poll_Linger_Duration = 1ms;
         std::atomic< bool > isInitOpenGL{ };
         Impl_( Config const &config = { } ) {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
@@ -96,7 +99,7 @@ namespace son8::windowed {
         }
 
         auto window( ) const { return window_; }
-    }; // class Window::Impl_
+    }; // class `Window::Impl_`
     // window public implementation
     Window::Window( Config const &config ) : impl_( std::make_unique< Impl_ >( config ) ) { }
     Window::~Window( ) = default;
@@ -143,6 +146,10 @@ namespace son8::windowed {
     // --
     void Window::check_Poll_Main_Thread( ) const {
         if ( not impl_->is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires poll events on main thread" );
+    }
+    // --
+    void Window::poll_Linger( ) const {
+        std::this_thread::sleep_for( Window::Impl_::Poll_Linger_Duration );
     }
 
 } // namespace son8::windowed
