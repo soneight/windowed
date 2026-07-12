@@ -1,9 +1,30 @@
 ## CHANGES
 > [keep a changelog](https://keepachangelog.com/en/1.1.0/) with [semantic versioning](https://semver.org/spec/v2.0.0.html)
 
-## main branch
+## MAIN branch
 
-### v0.5.0 - 2026-07-10
+### Unreleased
+
+- refine error handling
+- aspect ratio and window size configuration
+- wrap input handling
+
+### `v0.5.1` - 2026-07-12
+
+#### Added
+
+- `Config` class `LingerUS`: unsigned microseconds to linger (sleep) when swap buffers is not involved, to mitigate `cpu` throttling
+
+#### Changed
+
+- `Window` class implementation preserve `Config` values as const property
+
+#### Fixed
+
+- initializing `OpenGL` multiple times throws ( example `run_swap` plus `run` combo bug)
+- `glfw` window hint state messing `OpenGL` profile when recreating windows with different versions in a loop (use `glfwDefaultWindowHints` on each window creation)
+
+### `v0.5.0` - 2026-07-10
 
 #### Added
 
@@ -12,7 +33,7 @@
 - enforcing `Window` count only to one per process
 - throwing exception if `glad` failed to load `OpenGL` functions
 - `Window` class public methods for handling buffer swapping, polling events, closing window and initializing `OpenGL` functions via `glad`
-- `Window` blocking run methods: `run_{poll,swap,void}` for fine-tunning behavior
+- `Window` blocking run methods: `run_{poll,swap,void}` for fine-tune behavior
 - `Window` `run` method now initializing `OpenGL` before loop and freeing it after loop
 
 #### Changed
@@ -26,13 +47,13 @@
 - include `README` file was pointless
 
 
-### v0.4.0 - 2026-04-22
+### `v0.4.0` - 2026-04-22
 
 #### Added
 
 - this file
-- [notice](../NOTICE) file
-- [glfw](../licenses/glfw.md) license file
+- [`notice`](../NOTICE) file
+- [`glfw`](../licenses/glfw.md) license file
 
 #### Changed
 
@@ -44,34 +65,34 @@
 
 - sync `glfw` branch `0.0.4` changes with `main` `0.4.0` branch
 
-### v0.3.0 - 2025-12-22
+### `v0.3.0` - 2025-12-22
 
 #### Added
 
-- [window](../include/son8/windowed/window.hxx) header: move `Windowed` class to this header
+- [`window`](../include/son8/windowed/window.hxx) header: move `Windowed` class to this header
 - deprecated alias `Windowed` to `Window` class
 
 #### Changed
 
 - rename `Windowed` class as `Window` class
 
-### v0.2.1 - 2025-12-20
+### `v0.2.1` - 2025-12-20
 > bump `son8__overglad` target version to `0.0.5` (probably some fix)
 
-### v0.2.0 - 2025-12-18
+### `v0.2.0` - 2025-12-18
 
 #### Added
 
-- `glfw` subdirectory: for finding `glfw` target with specific [son8 header](../glfw/include/glfw/son8.hxx) and `CMake` interface target `glfw::son8`
-- [Makefile](../Makefile) convenient commands file
+- `glfw` subdirectory: for finding `glfw` target with specific [`son8 header`](../glfw/include/glfw/son8.hxx) and `CMake` interface target `glfw::son8`
+- [`Makefile`](../Makefile) convenient commands file
 
 #### Changed
 
-- using hash tags for fetching content instead of version tags
+- using hashtags for fetching content instead of version tags
 - `son8__overglad` target bump version 0.0.4
 - windowed source file: include `son8 header` instead of system `glfw` one
 
-### v0.1.0 - 2025-05-17
+### `v0.1.0` - 2025-05-17
 
 #### Added
 
@@ -86,9 +107,9 @@
   - if not `glfw` target presents find `glfw3` package or fullback to fetching it from `github` repository, version 3.3.10
   - if not `son8__overglad` target present fetching it from `github` repository, version 0.0.1
 
-## glfw branch
+## GLFW branch
 
-### v0.0.4 - 2026-04-21
+### `v0.0.4` - 2026-04-21
 > mostly licensing related changes
 
 #### Added
@@ -100,11 +121,11 @@
 - license from `BSL-1.0` to `Apache-2.0`
 - bump default fetching `overglad` version to patch 6
 
-### v0.0.3 - 2025-12-20 IMPORTANT seems to be kind of broken because not appearing in git log
-> cmake minimum required maximum 3.27, fetching `overglad` patch 5 instead patch 4
+### `v0.0.3` - 2025-12-20 IMPORTANT seems to be kind of broken because not appearing in git log
+> CMake minimum required maximum 3.27, fetching `overglad` patch 5 instead patch 4
 
-### v0.0.2 - 2025-12-18
+### `v0.0.2` - 2025-12-18
 > create special `glfw` folder to find `glfw` target, add fetching `overglad` target, fix MSVC compile options
 
-### v0.0.1 - 2025-03-21
-> find or fetch `glfw` from github and provide interface target for it
+### `v0.0.1` - 2025-03-21
+> find or fetch `glfw` from `github` and provide interface target for it
