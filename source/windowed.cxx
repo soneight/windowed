@@ -3,6 +3,7 @@
 #include <glfw/son8.hxx> // `GLFWwindow, glfw*`
 #include <glad/son8/loader.h> // `gladLoadGL`
 // `std`
+#include <array>
 #include <atomic> // `atomic bool`
 #include <cstddef> // `size_t`
 #include <chrono> // `duration`
@@ -11,6 +12,8 @@
 #include <thread> // `get_id( )`
 
 namespace son8::windowed {
+
+    using Size = std::size_t;
 
     namespace main_thread_ {
 
@@ -49,6 +52,11 @@ namespace son8::windowed {
     public:
         Config const config;
         std::atomic< bool > isInitOpenGL{ };
+        static constexpr std::array< char const *, static_cast< Size >( Error::Size_ ) > ErrorMessages{{
+            "Not an error",
+            "OpenGL already initialized",
+            "Load glad failed"
+        }};
         Impl_( Config const &configInit = { } ) : config{ configInit } {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
             static main_thread_::InitGLFW InitGLFW;
@@ -113,13 +121,14 @@ namespace son8::windowed {
         glfwMakeContextCurrent( nullptr );
     }
 
-    void Window::init_opengl( ) {
-        if ( is_Init_OpenGL( ) ) throw std::runtime_error{ "son8::windowed: Window::init_opengl() OpenGL is already initialized" };
+    Window::Error Window::init_opengl( ) {
+        if ( not is_Init_OpenGL( ) ) return Error::InitOpenGL; // throw std::runtime_error{ "son8::windowed: Window::init_opengl() OpenGL is already initialized" };
         impl_->isInitOpenGL.store( true );
         glfwMakeContextCurrent( impl_->window( ) );
-        if ( not gladLoadGL( glfwGetProcAddress ) ) throw std::runtime_error{ "son8::windowed: gladLoadGL() failed" };
+        if ( not gladLoadGL( glfwGetProcAddress ) ) return Error::LoadGlad; // throw std::runtime_error{ "son8::windowed: gladLoadGL() failed" };
         // TODO: add config option
         glfwSwapInterval( 1 );
+        return Error::None;
     }
 
     bool Window::is_closing( ) const {
@@ -141,6 +150,10 @@ namespace son8::windowed {
     // --
     bool Window::is_Init_OpenGL( ) const {
         return impl_->isInitOpenGL.load( );
+    }
+    void Window::throw_Error( Error errc ) const {
+        if ( errc == Error::None ) return;
+        throw std::runtime_error{ Impl_::ErrorMessages[static_cast< Size >( errc )] };
     }
     // --
     void Window::check_Poll_Main_Thread( ) const {
