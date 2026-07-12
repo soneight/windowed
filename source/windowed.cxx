@@ -55,14 +55,15 @@ namespace son8::windowed {
             if ( Count_Max <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: Window requires only one instance per process" );
 
             auto version = config.version( );
-            auto major = version >> 16;
+            auto major = version >> 16u;
             if ( 4 < major or major < 1 ) throw std::runtime_error( "son8::windowed: Config requires valid OpenGL major version" );
 
-            auto minor = ( version >> 8 ) & 0xFFu;
+            auto minor = ( version >> 8u ) & 0xFFu;
             auto skip = 0u;
             unsigned check_minor[] = { skip, 5u, 1u, 3u, 6u };
             if ( check_minor[ major ] < minor ) throw std::runtime_error( "son8::windowed: Config requires valid OpenGL minor version" );
-
+            // NOTE: important to clear hints
+            glfwDefaultWindowHints( );
             glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, major );
             glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, minor );
             glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
