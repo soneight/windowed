@@ -42,11 +42,16 @@ namespace son8::windowed {
             { }
             operator unsigned( ) const noexcept { return value; }
         } version_;
+        struct Linger_ final {
+            unsigned value{ 1'000u };
+            operator unsigned( ) const noexcept { return value; }
+        } linger_;
     public:
         using Width = Width_;
         using Height = Height_;
         using Title = Title_;
         using Version = Version_;
+        using LingerUS = Linger_;
         template< typename ...Args >
         Config( Args &&...args )
         { ( set( std::move( args ) ), ... ); }
@@ -55,11 +60,13 @@ namespace son8::windowed {
         Config &set( Height height) { height_ = height; return *this; }
         Config &set( Title title) { title_ = title; return *this; }
         Config &set( Version version ) { version_ = version; return *this; }
+        Config &set( LingerUS lingerUS ) { linger_ = lingerUS; return *this; }
         // getters
         auto width( ) const { return width_; }
         auto height( ) const { return height_; }
         auto title( ) const { return title_; }
         auto version( ) const { return version_; }
+        auto linger_us( ) const { return linger_; }
     }; // class Config
 } // namespace son8::windowed
 

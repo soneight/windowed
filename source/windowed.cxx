@@ -12,8 +12,6 @@
 
 namespace son8::windowed {
 
-    using namespace std::chrono_literals;
-
     namespace main_thread_ {
 
         static std::thread::id &id_ref( ) {
@@ -49,9 +47,9 @@ namespace son8::windowed {
         GLFWwindow *window_;
         static constexpr std::size_t Count_Max = 1u;
     public:
-        static constexpr std::chrono::duration Poll_Linger_Duration = 1ms;
+        Config const config;
         std::atomic< bool > isInitOpenGL{ };
-        Impl_( Config const &config = { } ) {
+        Impl_( Config const &configInit = { } ) : config{ configInit } {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
             static main_thread_::InitGLFW InitGLFW;
             if ( Count_Max <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: Window requires only one instance per process" );
@@ -149,7 +147,7 @@ namespace son8::windowed {
     }
     // --
     void Window::poll_Linger( ) const {
-        std::this_thread::sleep_for( Window::Impl_::Poll_Linger_Duration );
+        std::this_thread::sleep_for( std::chrono::microseconds( impl_->config.linger_us( ) ) );
     }
 
 } // namespace son8::windowed
