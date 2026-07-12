@@ -3,7 +3,7 @@
 // son8
 #include <son8/windowed/config.hxx> // Config
 // std
-#include <memory> // unique_ptr
+#include <memory> // `unique_ptr`
 #include <utility> // forward
 
 // forward declarations
@@ -15,12 +15,13 @@ namespace son8::windowed {
         class Impl_;
         std::unique_ptr< Impl_ > impl_;
         enum class Error_ : unsigned {
-            None, InitOpenGL, LoadGlad, Size_
+            None, ReinitOpenGL, LoadGlad, Size_
         };
         bool is_Init_OpenGL( ) const;
         void check_Poll_Main_Thread( ) const;
         void poll_Linger( ) const;
-        void throw_Error( Error_ errc ) const;
+        void throw_Error( Error_ error ) const;
+        static constexpr auto error_Size( ) { return static_cast< unsigned >( Error_::Size_ ); }
         static constexpr bool is_Poll_Events( unsigned flags ) { return ~flags & Without::Poll_Events; }
         static constexpr bool is_Swap_Buffer( unsigned flags ) { return ~flags & Without::Swap_Buffer; }
         static constexpr bool is_Poll_Linger( unsigned flags ) { return ~flags & Without::Poll_Linger; }
@@ -43,6 +44,7 @@ namespace son8::windowed {
 
         void free_opengl( );
         [[nodiscard]] Error init_opengl( );
+        static bool is_error( Error error ) noexcept;
         bool is_closing( ) const;
         void poll_events( ) const;
         void swap_buffer( ) const;

@@ -44,18 +44,18 @@ namespace son8::windowed {
         static Id Global;
     }
 
-    static std::size_t GlobalWindowCount_{ };
+    static Size GlobalWindowCount_{ };
 
     class Window::Impl_ {
         GLFWwindow *window_;
-        static constexpr std::size_t Count_Max = 1u;
+        static constexpr Size Count_Max = 1u;
     public:
         Config const config;
         std::atomic< bool > isInitOpenGL{ };
-        static constexpr std::array< char const *, static_cast< Size >( Error::Size_ ) > ErrorMessages{{
-            "Not an error",
-            "OpenGL already initialized",
-            "Load glad failed"
+        static constexpr std::array< char const *, error_Size( ) > ErrorMessages{{
+            "son8::windowed: Window - Not an error",
+            "son8::windowed: Window - OpenGL already initialized",
+            "son8::windowed: Window - Load glad failed"
         }};
         Impl_( Config const &configInit = { } ) : config{ configInit } {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
@@ -122,10 +122,10 @@ namespace son8::windowed {
     }
 
     Window::Error Window::init_opengl( ) {
-        if ( not is_Init_OpenGL( ) ) return Error::InitOpenGL; // throw std::runtime_error{ "son8::windowed: Window::init_opengl() OpenGL is already initialized" };
+        if ( is_Init_OpenGL( ) ) return Error::ReinitOpenGL;
         impl_->isInitOpenGL.store( true );
         glfwMakeContextCurrent( impl_->window( ) );
-        if ( not gladLoadGL( glfwGetProcAddress ) ) return Error::LoadGlad; // throw std::runtime_error{ "son8::windowed: gladLoadGL() failed" };
+        if ( not gladLoadGL( glfwGetProcAddress ) ) return Error::LoadGlad;
         // TODO: add config option
         glfwSwapInterval( 1 );
         return Error::None;
@@ -133,6 +133,10 @@ namespace son8::windowed {
 
     bool Window::is_closing( ) const {
         return glfwWindowShouldClose( impl_->window( ) );
+    }
+
+    bool Window::is_error( Error error ) noexcept {
+        return error != Error::None;
     }
 
     void Window::close( ) const {
@@ -151,9 +155,9 @@ namespace son8::windowed {
     bool Window::is_Init_OpenGL( ) const {
         return impl_->isInitOpenGL.load( );
     }
-    void Window::throw_Error( Error errc ) const {
-        if ( errc == Error::None ) return;
-        throw std::runtime_error{ Impl_::ErrorMessages[static_cast< Size >( errc )] };
+    void Window::throw_Error( Error error ) const {
+        if ( error == Error::None ) return;
+        throw std::runtime_error{ Impl_::ErrorMessages[static_cast< Size >( error )] };
     }
     // --
     void Window::check_Poll_Main_Thread( ) const {
