@@ -3,7 +3,6 @@
 // son8
 #include <son8/windowed/config.hxx> // Config
 // std
-#include <memory> // `unique_ptr`
 #include <utility> // forward
 
 // forward declarations
@@ -11,9 +10,9 @@ struct GLFWwindow;
 
 namespace son8::windowed {
 
-    class Window {
+    class Window final {
         class Impl_;
-        std::unique_ptr< Impl_ > impl_;
+        Impl_ *impl_;
         enum class Error_ : unsigned {
             None, ReinitOpenGL, LoadGlad, Size_
         };
@@ -36,7 +35,7 @@ namespace son8::windowed {
 
         operator GLFWwindow *( ) const;
 
-        struct Without {
+        struct Without final {
             static inline constexpr unsigned Poll_Events = 1u << 0u; // 1
             static inline constexpr unsigned Swap_Buffer = 1u << 1u; // 2
             static inline constexpr unsigned Poll_Linger = 1u << 2u; // 4

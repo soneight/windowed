@@ -108,8 +108,8 @@ namespace son8::windowed {
         auto window( ) const { return window_; }
     }; // class `Window::Impl_`
     // window public implementation
-    Window::Window( Config const &config ) : impl_( std::make_unique< Impl_ >( config ) ) { }
-    Window::~Window( ) = default;
+    Window::Window( Config const &config ) : impl_{ new Impl_{ config } } { }
+    Window::~Window( ) { delete impl_; }
 
     Window::operator GLFWwindow *( ) const {
         return impl_->window( );
