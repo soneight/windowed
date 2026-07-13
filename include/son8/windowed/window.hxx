@@ -3,7 +3,6 @@
 // son8
 #include <son8/windowed/config.hxx> // Config
 // std
-#include <memory> // unique_ptr
 #include <utility> // forward
 
 // forward declarations
@@ -11,16 +10,22 @@ struct GLFWwindow;
 
 namespace son8::windowed {
 
-    class Window {
+    class Window final {
         class Impl_;
-        std::unique_ptr< Impl_ > impl_;
+        Impl_ *impl_;
+        enum class Error_ : unsigned {
+            None, ReinitOpenGL, LoadGlad, Size_
+        };
         bool is_Init_OpenGL( ) const;
         void check_Poll_Main_Thread( ) const;
         void poll_Linger( ) const;
+        void throw_Error( Error_ error ) const;
+        static constexpr auto error_Size( ) { return static_cast< unsigned >( Error_::Size_ ); }
         static constexpr bool is_Poll_Events( unsigned flags ) { return ~flags & Without::Poll_Events; }
         static constexpr bool is_Swap_Buffer( unsigned flags ) { return ~flags & Without::Swap_Buffer; }
         static constexpr bool is_Poll_Linger( unsigned flags ) { return ~flags & Without::Poll_Linger; }
     public:
+        using Error = Error_;
         Window( Config const &config = { } );
         ~Window( );
         Window( Window && ) = delete;
@@ -30,14 +35,15 @@ namespace son8::windowed {
 
         operator GLFWwindow *( ) const;
 
-        struct Without {
+        struct Without final {
             static inline constexpr unsigned Poll_Events = 1u << 0u; // 1
             static inline constexpr unsigned Swap_Buffer = 1u << 1u; // 2
             static inline constexpr unsigned Poll_Linger = 1u << 2u; // 4
         };
 
         void free_opengl( );
-        void init_opengl( );
+        [[nodiscard]] Error init_opengl( );
+        static bool is_error( Error error ) noexcept;
         bool is_closing( ) const;
         void poll_events( ) const;
         void swap_buffer( ) const;
@@ -47,7 +53,7 @@ namespace son8::windowed {
         void run( Callback &&callback, Args &&...args ) {
             if constexpr ( is_Poll_Events( without ) ) check_Poll_Main_Thread( );
 
-            if constexpr ( is_Swap_Buffer( without ) ) init_opengl( );
+            if constexpr ( is_Swap_Buffer( without ) ) throw_Error( init_opengl( ) );
 
             while ( not is_closing( ) ) {
                 if constexpr ( is_Poll_Events( without ) ) poll_events( );
