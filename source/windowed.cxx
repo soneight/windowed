@@ -13,7 +13,10 @@
 
 namespace son8::windowed {
 
+    namespace time = std::chrono;
+
     using Size = std::size_t;
+    using Clock = time::steady_clock;
 
     namespace main_thread_ {
 
@@ -51,7 +54,6 @@ namespace son8::windowed {
         static constexpr Size Count_Max = 1u;
     public:
         Config const config;
-        std::chrono::steady_clock::time_point lingerTimePoint;
         std::atomic< bool > isInitOpenGL{ };
         static constexpr std::array< char const *, error_Size( ) > ErrorMessages{{
             "son8::windowed: Window - Not an error",
@@ -62,6 +64,8 @@ namespace son8::windowed {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
             static main_thread_::InitGLFW InitGLFW;
             if ( Count_Max <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: Window requires only one instance per process" );
+
+            if ( config.linger_us( ) > 20'000 ) throw std::runtime_error( "son8::windowed: Config requires linger to be up to 20 milliseconds" );
 
             auto version = config.version( );
             auto major = version >> 16u;
@@ -156,8 +160,8 @@ namespace son8::windowed {
     bool Window::is_Init_OpenGL( ) const {
         return impl_->isInitOpenGL.load( );
     }
-    void Window::throw_Error( Error error ) const {
-        if ( error == Error::None ) return;
+    void Window::if_Error_Throw( Error error ) const {
+        if ( not is_error( error ) ) return;
         throw std::runtime_error{ Impl_::ErrorMessages[static_cast< Size >( error )] };
     }
     // --
@@ -165,12 +169,14 @@ namespace son8::windowed {
         if ( not impl_->is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires poll events on main thread" );
     }
     // --
-    void Window::poll_Linger_Play( ) {
-        impl_->lingerTimePoint = std::chrono::steady_clock::now( );
+    long long Window::poll_Linger_Start( ) const {
+        return Clock::now( ).time_since_epoch( ).count( );
     }
     // --
-    void Window::poll_Linger_Stop( ) {
-        auto deadline = impl_->lingerTimePoint + std::chrono::microseconds( impl_->config.linger_us( ) );
+    void Window::poll_Linger_Until( long long startPoint ) const {
+        auto duration = Clock::duration{ startPoint };
+        auto timemark = Clock::time_point{ duration };
+        auto deadline = timemark + time::microseconds( impl_->config.linger_us( ) );
         std::this_thread::sleep_until( deadline );
     }
 

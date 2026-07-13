@@ -18,9 +18,9 @@ namespace son8::windowed {
         };
         bool is_Init_OpenGL( ) const;
         void check_Poll_Main_Thread( ) const;
-        void poll_Linger_Play( );
-        void poll_Linger_Stop( );
-        void throw_Error( Error_ error ) const;
+        long long poll_Linger_Start( ) const;
+        void poll_Linger_Until( long long startTime ) const;
+        void if_Error_Throw( Error_ error ) const;
         static constexpr auto error_Size( ) { return static_cast< unsigned >( Error_::Size_ ); }
         static constexpr bool is_Poll_Events( unsigned flags ) { return ~flags & Without::Poll_Events; }
         static constexpr bool is_Swap_Buffer( unsigned flags ) { return ~flags & Without::Swap_Buffer; }
@@ -54,7 +54,7 @@ namespace son8::windowed {
         void run( Callback &&callback, Args &&...args ) {
             if constexpr ( is_Poll_Events( without ) ) check_Poll_Main_Thread( );
 
-            if constexpr ( is_Swap_Buffer( without ) ) throw_Error( init_opengl( ) );
+            if constexpr ( is_Swap_Buffer( without ) ) if_Error_Throw( init_opengl( ) );
 
             // NOTE: lingering make only sense when there is none
             // \ buffer swapping involved and after user callback
@@ -62,10 +62,10 @@ namespace son8::windowed {
 
             while ( not is_closing( ) ) {
                 if constexpr ( Is_Linger_Active ) {
-                    poll_Linger_Play( );
+                    auto startTime = poll_Linger_Start( );
                     poll_events( );
                     std::forward< Callback >( callback )( std::forward< Args >( args )... );
-                    poll_Linger_Stop( );
+                    poll_Linger_Until( startTime );
                 } else {
                     if constexpr ( is_Poll_Events( without ) ) poll_events( );
                     std::forward< Callback >( callback )( std::forward< Args >( args )... );
@@ -78,17 +78,20 @@ namespace son8::windowed {
         // run without `OpenGL` initialization, useful for hidden or event only windows
         template< typename Callback, typename ...Args >
         void run_poll( Callback &&callback, Args &&...args ) {
-            run< Without::Swap_Buffer >( std::forward< Callback >( callback ), std::forward< Args >( args )... );
+            run< Without::Swap_Buffer >
+            ( std::forward< Callback >( callback ), std::forward< Args >( args )... );
         }
         // run without polling events, useful to run on secondary thread for rendering in multi-threaded applications
         template< typename Callback, typename ...Args >
         void run_swap( Callback &&callback, Args &&...args ) {
-            run< Without::Poll_Events | Without::Poll_Linger >( std::forward< Callback >( callback ), std::forward< Args >( args )... );
+            run< Without::Poll_Events | Without::Poll_Linger >
+            ( std::forward< Callback >( callback ), std::forward< Args >( args )... );
         }
         // run only callback, useful to fine tune behavior, but requires using all window public functions correctly
         template< typename Callback, typename ...Args >
         void run_void( Callback &&callback, Args &&...args ) {
-            run< Without::Poll_Events | Without::Swap_Buffer | Without::Poll_Linger >( std::forward< Callback >( callback ), std::forward< Args >( args )... );
+            run< Without::Poll_Events | Without::Swap_Buffer | Without::Poll_Linger >
+            ( std::forward< Callback >( callback ), std::forward< Args >( args )... );
         }
 
     }; // class Window
