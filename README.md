@@ -122,7 +122,7 @@ int main( ) {
     });
     close.detach( );
 #if APP_FINETUNE
-    window.init_opengl( );
+    if ( Window::is_error( window.init_opengl( ) ) ) return -1;
     window.run_void( [&window]( ) { // not recommending this order, but rather fine tune example
         app::draw( );
         window.swap_buffer( );

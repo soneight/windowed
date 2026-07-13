@@ -9,6 +9,19 @@
 - aspect ratio and window size configuration
 - wrap input handling
 
+### `v0.5.2` - 2026-07-13
+
+#### Added
+
+- `Window::Error` enum class, 0 is not an error
+- `is_error` `Window` public method to check is some functions return error
+- private `Window` class method `throw_Error`: that throw exception if input error code was non-zero
+
+#### Changed
+
+- use raw pointer instead of `unique_ptr` to not include memory header in library public headers
+- `init_opengl` now returns error codes instead of throwing an exception
+
 ### `v0.5.1` - 2026-07-12
 
 #### Added
