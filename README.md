@@ -29,7 +29,7 @@
       - constructor with 3 parameters: major, minor and `std::optional` profile boolean: false `core`, true `compatibility`, not set `unspecified`
     - `Title`: window title, internal data is `std::string`, passed to constructor like `Title{ "your title" }`, `Title{ your_string_convertible_variable }`, default empty string
     - `Width` and `Height`: window `width/height`, internal data is unsigned, passed to constructor like `Width{ 400u }`, default `640u/360u`
-    - `LingerUS`: event loop linger (sleep) when swap buffering disabled on main thread, default to `1000 microseconds`
+    - `LingerUS`: event loop linger (sleep) when swap buffering disabled on main thread, default to `1000 microseconds`, `Window` throws when this value exceeds 20 milliseconds
 
 - [`<son8/windowed/window.hxx>`](./include/son8/windowed/window.hxx) (class `Window`):
   - enforce to be created on main thread
@@ -48,8 +48,8 @@
       - `Window::Without::Poll_Events`: disable run `poll_events` method
       - `Window::Without::Swap_Buffer`: disable run `swap_buffer` method
       - `Window::Without::Poll_Linger`: disable run private `poll_Linger` method, only works when buffer swapping is skipped
-    - `run_poll`: calls `run` without `swap_buffer` with lingering (sleep) for `Config LingerUS` milliseconds, useful for splitting input processing and rendering logic
-    - `run_swap`: calls `run` without poll events, useful for processing `OpenGL` calls on background thread
+    - `run_poll`: calls `run` without `swap_buffer` with lingering (sleep until not exceeding `Config::LingerUS` milliseconds after poll events and user callback), useful for splitting input processing and rendering logic
+    - `run_swap`: calls `run` without poll events and lingering, useful for processing `OpenGL` calls on background thread
     - `run_void`: calls `run` that only call user provided function, use public methods to fine-tune a specific behavior
 
 ### Example

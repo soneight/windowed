@@ -9,6 +9,17 @@
 - aspect ratio and window size configuration
 - wrap input handling
 
+### `v0.5.3` - 2026-07-13
+
+#### Added
+
+- `Window` throws on construction when `Config::LingerUS` exceeds 20 milliseconds limit
+
+#### Changed
+
+- linger behavior instead of sleeping for no matter what, now sleeps until it not exceeds `Config::LingerUS` microseconds after running poll events and user callback
+- private `Window` method name from `throw_Error` to `if_Error_Throw` to better indicate that there if condition involved
+
 ### `v0.5.2` - 2026-07-13
 
 #### Added
