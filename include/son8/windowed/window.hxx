@@ -18,7 +18,8 @@ namespace son8::windowed {
         };
         bool is_Init_OpenGL( ) const;
         void check_Poll_Main_Thread( ) const;
-        void poll_Linger( ) const;
+        void poll_Linger_Play( );
+        void poll_Linger_Stop( );
         void throw_Error( Error_ error ) const;
         static constexpr auto error_Size( ) { return static_cast< unsigned >( Error_::Size_ ); }
         static constexpr bool is_Poll_Events( unsigned flags ) { return ~flags & Without::Poll_Events; }
@@ -55,13 +56,21 @@ namespace son8::windowed {
 
             if constexpr ( is_Swap_Buffer( without ) ) throw_Error( init_opengl( ) );
 
+            // NOTE: lingering make only sense when there is none
+            // \ buffer swapping involved and after user callback
+            static constexpr bool Is_Linger_Active = not is_Swap_Buffer( without ) and is_Poll_Events( without ) and is_Poll_Linger( without );
+
             while ( not is_closing( ) ) {
-                if constexpr ( is_Poll_Events( without ) ) poll_events( );
-                std::forward< Callback >( callback )( std::forward< Args >( args )... );
-                // NOTE: lingering make only sense when there is none
-                // \ buffer swapping involved and after user callback
-                if constexpr ( is_Swap_Buffer( without ) ) swap_buffer( );
-                else if constexpr ( is_Poll_Events( without ) and is_Poll_Linger( without ) ) poll_Linger( );
+                if constexpr ( Is_Linger_Active ) {
+                    poll_Linger_Play( );
+                    poll_events( );
+                    std::forward< Callback >( callback )( std::forward< Args >( args )... );
+                    poll_Linger_Stop( );
+                } else {
+                    if constexpr ( is_Poll_Events( without ) ) poll_events( );
+                    std::forward< Callback >( callback )( std::forward< Args >( args )... );
+                    if constexpr ( is_Swap_Buffer( without ) ) swap_buffer( );
+                }
             }
 
             if constexpr ( is_Swap_Buffer( without ) ) free_opengl( );

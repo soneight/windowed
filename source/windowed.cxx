@@ -51,6 +51,7 @@ namespace son8::windowed {
         static constexpr Size Count_Max = 1u;
     public:
         Config const config;
+        std::chrono::steady_clock::time_point lingerTimePoint;
         std::atomic< bool > isInitOpenGL{ };
         static constexpr std::array< char const *, error_Size( ) > ErrorMessages{{
             "son8::windowed: Window - Not an error",
@@ -164,8 +165,13 @@ namespace son8::windowed {
         if ( not impl_->is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires poll events on main thread" );
     }
     // --
-    void Window::poll_Linger( ) const {
-        std::this_thread::sleep_for( std::chrono::microseconds( impl_->config.linger_us( ) ) );
+    void Window::poll_Linger_Play( ) {
+        impl_->lingerTimePoint = std::chrono::steady_clock::now( );
+    }
+    // --
+    void Window::poll_Linger_Stop( ) {
+        auto deadline = impl_->lingerTimePoint + std::chrono::microseconds( impl_->config.linger_us( ) );
+        std::this_thread::sleep_until( deadline );
     }
 
 } // namespace son8::windowed
