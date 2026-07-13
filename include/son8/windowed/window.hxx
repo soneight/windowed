@@ -62,8 +62,8 @@ namespace son8::windowed {
 
             while ( not is_closing( ) ) {
                 if constexpr ( Is_Linger_Active ) {
-                    poll_events( );
                     poll_Linger_Play( );
+                    poll_events( );
                     std::forward< Callback >( callback )( std::forward< Args >( args )... );
                     poll_Linger_Stop( );
                 } else {
