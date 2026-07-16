@@ -4,7 +4,6 @@
 #include <glad/son8/loader.h> // `gladLoadGL`
 // `std`
 #include <array>
-#include <atomic> // `atomic bool`
 #include <cstddef> // `size_t`
 #include <chrono> // `duration`
 #include <iostream> // `cerr`
@@ -59,9 +58,8 @@ namespace son8::windowed {
         static constexpr auto Error_Size = static_cast< unsigned >( Error::Size_ );
     public:
         Config const config;
-        Thread::id swapThread{ };
         Mutex swapMutex;
-        std::atomic< bool > isBoundOpenGL{ };
+        Thread::id swapThread{ };
         bool is_swap_thread_empty( ) { return swapThread == Thread::id{ }; }
         bool is_swap_thread_equal( ) { return swapThread == std::this_thread::get_id( ); }
 
@@ -172,13 +170,7 @@ namespace son8::windowed {
     }
     // -- init_opengl is deprecated
     Window::Error Window::init_opengl( ) {
-        if ( impl_->isBoundOpenGL.load( ) ) return Error::AlreadyBound;
-        impl_->isBoundOpenGL.store( true );
-        glfwMakeContextCurrent( impl_->window( ) );
-        if ( not gladLoadGL( glfwGetProcAddress ) ) return Error::LoadGlad;
-        // TODO: add config option
-        glfwSwapInterval( 1 );
-        return Error::None;
+        return bind_opengl( );
     }
 
     bool Window::is_closing( ) const {
