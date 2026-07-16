@@ -51,21 +51,24 @@ namespace son8::windowed {
 
     class Window::Impl_ {
         GLFWwindow *window_;
-        static constexpr Size Count_Max = 1u;
+        static constexpr Size Max_Count = 1u;
+        static constexpr auto Max_Linger_US = 20'000u;
+        static constexpr auto Error_Size = static_cast< unsigned >( Error::Size_ );
     public:
         Config const config;
         std::atomic< bool > isBoundOpenGL{ };
-        static constexpr std::array< char const *, error_Size( ) > ErrorMessages{{
+
+        static constexpr std::array< char const *, Error_Size > ErrorMessages{{
             "son8::windowed: Window - Not an error",
-            "son8::windowed: Window - OpenGL already initialized",
+            "son8::windowed: Window - Context is already bound",
             "son8::windowed: Window - Load glad failed"
         }};
         Impl_( Config const &configInit = { } ) : config{ configInit } {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
-            static main_thread_::InitGLFW InitGLFW;
-            if ( Count_Max <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: Window requires only one instance per process" );
+            { static main_thread_::InitGLFW InitGLFW; } // hide `initGLFW` not used outside
+            if ( Max_Count <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: Window requires only one instance per process" );
 
-            if ( config.linger_us( ) > 20'000 ) throw std::runtime_error( "son8::windowed: Config requires linger to be up to 20 milliseconds" );
+            if ( config.linger_us( ) > Max_Linger_US ) throw std::runtime_error( "son8::windowed: Config requires that the delay does not exceed 20 milliseconds" );
 
             auto version = config.version( );
             auto major = version >> 16u;
@@ -141,6 +144,7 @@ namespace son8::windowed {
         if ( not impl_->isBoundOpenGL.compare_exchange_strong( expect, true ) ) return Error::AlreadyBound;
 
         glfwMakeContextCurrent( impl_->window( ) );
+
         auto loadError = impl_->load_opengl( );
         if ( loadError != Error::None ) {
             glfwMakeContextCurrent( nullptr );
@@ -185,9 +189,6 @@ namespace son8::windowed {
     }
     // window private implementation
     // --
-    bool Window::is_Init_OpenGL( ) const {
-        return impl_->isBoundOpenGL.load( );
-    }
     void Window::if_Error_Throw( Error error ) const {
         if ( not is_error( error ) ) return;
         throw std::runtime_error{ Impl_::ErrorMessages[static_cast< Size >( error )] };

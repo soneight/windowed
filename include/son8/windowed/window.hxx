@@ -19,12 +19,10 @@ namespace son8::windowed {
             LoadGlad,
             Size_
         };
-        [[deprecated]] bool is_Init_OpenGL( ) const;
         void check_Poll_Main_Thread( ) const;
         long long poll_Linger_Start( ) const;
         void poll_Linger_Until( long long startTime ) const;
         void if_Error_Throw( Error_ error ) const;
-        static constexpr auto error_Size( ) { return static_cast< unsigned >( Error_::Size_ ); }
         static constexpr bool is_Poll_Events( unsigned flags ) { return ~flags & Without::Poll_Events; }
         static constexpr bool is_Swap_Buffer( unsigned flags ) { return ~flags & Without::Swap_Buffer; }
         static constexpr bool is_Poll_Linger( unsigned flags ) { return ~flags & Without::Poll_Linger; }
@@ -47,7 +45,9 @@ namespace son8::windowed {
 
         void free_opengl( );
         [[nodiscard]] Error bind_opengl( );
-        [[nodiscard]] [[deprecated]] Error init_opengl( );
+        // TODO: remove
+        [[nodiscard]] [[deprecated("son8::windowed: Window, use bind_opengl instead, this function would be removed!")]]
+        Error init_opengl( );
         static bool is_error( Error error ) noexcept;
         bool is_closing( ) const;
         void poll_events( ) const;
@@ -58,7 +58,7 @@ namespace son8::windowed {
         void run( Callback &&callback, Args &&...args ) {
             if constexpr ( is_Poll_Events( without ) ) check_Poll_Main_Thread( );
 
-            if constexpr ( is_Swap_Buffer( without ) ) if_Error_Throw( init_opengl( ) );
+            if constexpr ( is_Swap_Buffer( without ) ) if_Error_Throw( bind_opengl( ) );
 
             // NOTE: lingering make only sense when there is none
             // \ buffer swapping involved and after user callback
