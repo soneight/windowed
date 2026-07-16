@@ -14,9 +14,12 @@ namespace son8::windowed {
         class Impl_;
         Impl_ *impl_;
         enum class Error_ : unsigned {
-            None, ReinitOpenGL, LoadGlad, Size_
+            None,
+            AlreadyBound, ReinitOpenGL [[deprecated]] = AlreadyBound,
+            LoadGlad,
+            Size_
         };
-        bool is_Init_OpenGL( ) const;
+        [[deprecated]] bool is_Init_OpenGL( ) const;
         void check_Poll_Main_Thread( ) const;
         long long poll_Linger_Start( ) const;
         void poll_Linger_Until( long long startTime ) const;
@@ -43,7 +46,8 @@ namespace son8::windowed {
         };
 
         void free_opengl( );
-        [[nodiscard]] Error init_opengl( );
+        [[nodiscard]] Error bind_opengl( );
+        [[nodiscard]] [[deprecated]] Error init_opengl( );
         static bool is_error( Error error ) noexcept;
         bool is_closing( ) const;
         void poll_events( ) const;

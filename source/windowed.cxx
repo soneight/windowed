@@ -54,7 +54,7 @@ namespace son8::windowed {
         static constexpr Size Count_Max = 1u;
     public:
         Config const config;
-        std::atomic< bool > isInitOpenGL{ };
+        std::atomic< bool > isBoundOpenGL{ };
         static constexpr std::array< char const *, error_Size( ) > ErrorMessages{{
             "son8::windowed: Window - Not an error",
             "son8::windowed: Window - OpenGL already initialized",
@@ -110,6 +110,17 @@ namespace son8::windowed {
             return std::this_thread::get_id( ) == id;
         }
 
+        Error load_opengl( ) const {
+            // NOTE: requires `glfwMakeCurrentContext` to be active
+            static Error_ loadError = []( ) {
+                if ( gladLoadGL( glfwGetProcAddress ) ) return Error::None;
+
+                return Error::LoadGlad;
+            }( );
+
+            return loadError;
+        }
+
         auto window( ) const { return window_; }
     }; // class `Window::Impl_`
     // window public implementation
@@ -121,14 +132,31 @@ namespace son8::windowed {
     }
 
     void Window::free_opengl( ) {
-        if ( not is_Init_OpenGL( ) ) return;
-        impl_->isInitOpenGL.store( false );
         glfwMakeContextCurrent( nullptr );
+        impl_->isBoundOpenGL.store( false );
     }
 
+    Window::Error Window::bind_opengl( ) {
+        bool expect{ false };
+        if ( not impl_->isBoundOpenGL.compare_exchange_strong( expect, true ) ) return Error::AlreadyBound;
+
+        glfwMakeContextCurrent( impl_->window( ) );
+        auto loadError = impl_->load_opengl( );
+        if ( loadError != Error::None ) {
+            glfwMakeContextCurrent( nullptr );
+            impl_->isBoundOpenGL.store( false );
+            return loadError;
+        }
+
+        // TODO: add config option
+        glfwSwapInterval( 1 );
+
+        return Error::None;
+    }
+    // -- init_opengl is deprecated
     Window::Error Window::init_opengl( ) {
-        if ( is_Init_OpenGL( ) ) return Error::ReinitOpenGL;
-        impl_->isInitOpenGL.store( true );
+        if ( impl_->isBoundOpenGL.load( ) ) return Error::AlreadyBound;
+        impl_->isBoundOpenGL.store( true );
         glfwMakeContextCurrent( impl_->window( ) );
         if ( not gladLoadGL( glfwGetProcAddress ) ) return Error::LoadGlad;
         // TODO: add config option
@@ -158,7 +186,7 @@ namespace son8::windowed {
     // window private implementation
     // --
     bool Window::is_Init_OpenGL( ) const {
-        return impl_->isInitOpenGL.load( );
+        return impl_->isBoundOpenGL.load( );
     }
     void Window::if_Error_Throw( Error error ) const {
         if ( not is_error( error ) ) return;
