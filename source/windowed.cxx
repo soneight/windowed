@@ -8,27 +8,30 @@
 #include <cstddef> // `size_t`
 #include <chrono> // `duration`
 #include <iostream> // `cerr`
+#include <mutex> // `mutex, scoped_lock`
 #include <stdexcept> // `runtime_error`
 #include <thread> // `get_id( )`
 
 namespace son8::windowed {
-
+    // aliases
     namespace time = std::chrono;
-
     using Size = std::size_t;
     using Clock = time::steady_clock;
+    using Thread = std::thread;
+    using Mutex = std::mutex;
+    using Lock = std::scoped_lock< std::mutex >;
 
     namespace main_thread_ {
 
-        static std::thread::id &id_ref( ) {
-            static std::thread::id id{ };
+        static Thread::id &id_ref( ) {
+            static Thread::id id{ };
             return id;
         }
 
         struct Id {
             Id( ) {
                 auto &id = id_ref( );
-                if ( id == std::thread::id{ } ) id = std::this_thread::get_id( );
+                if ( id == Thread::id{ } ) id = std::this_thread::get_id( );
             }
         };
 
@@ -56,12 +59,16 @@ namespace son8::windowed {
         static constexpr auto Error_Size = static_cast< unsigned >( Error::Size_ );
     public:
         Config const config;
+        Thread::id swapThread{ };
+        Mutex swapMutex;
         std::atomic< bool > isBoundOpenGL{ };
+        bool is_swap_thread_empty( ) { return swapThread == Thread::id{ }; }
+        bool is_swap_thread_equal( ) { return swapThread == std::this_thread::get_id( ); }
 
         static constexpr std::array< char const *, Error_Size > ErrorMessages{{
             "son8::windowed: Window - Not an error",
             "son8::windowed: Window - Context is already bound",
-            "son8::windowed: Window - Load glad failed"
+            "son8::windowed: Window - Load glad failed",
         }};
         Impl_( Config const &configInit = { } ) : config{ configInit } {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
@@ -108,7 +115,7 @@ namespace son8::windowed {
             // \ to possible static (globals) objects out-order creation
             // \ main thread Global id could be not initialized properly
             // \ in case of background thread this check is always false
-            if ( id == std::thread::id{ } ) id = std::this_thread::get_id( );
+            if ( id == Thread::id{ } ) id = std::this_thread::get_id( );
 
             return std::this_thread::get_id( ) == id;
         }
@@ -135,22 +142,28 @@ namespace son8::windowed {
     }
 
     void Window::free_opengl( ) {
+        Lock contextLock{ impl_->swapMutex };
+
+        if ( not impl_->is_swap_thread_equal( ) ) return;
+
         glfwMakeContextCurrent( nullptr );
-        impl_->isBoundOpenGL.store( false );
+        impl_->swapThread = Thread::id{ };
     }
 
     Window::Error Window::bind_opengl( ) {
-        bool expect{ false };
-        if ( not impl_->isBoundOpenGL.compare_exchange_strong( expect, true ) ) return Error::AlreadyBound;
+        Lock contextLock{ impl_->swapMutex };
+
+        if ( not impl_->is_swap_thread_empty( ) ) return Error::AlreadyBound;
 
         glfwMakeContextCurrent( impl_->window( ) );
 
         auto loadError = impl_->load_opengl( );
         if ( loadError != Error::None ) {
             glfwMakeContextCurrent( nullptr );
-            impl_->isBoundOpenGL.store( false );
             return loadError;
         }
+
+        impl_->swapThread = std::this_thread::get_id( );
 
         // TODO: add config option
         glfwSwapInterval( 1 );
