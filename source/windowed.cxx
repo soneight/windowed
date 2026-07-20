@@ -58,7 +58,7 @@ namespace son8::windowed {
         static constexpr auto Error_Size = static_cast< unsigned >( Error::Size_ );
     public:
         Config const config;
-        Mutex swapMutex;
+        Mutex /*mutable?*/ swapMutex;
         Thread::id swapThread{ };
         bool is_swap_thread_empty( ) { return swapThread == Thread::id{ }; }
         bool is_swap_thread_equal( ) { return swapThread == std::this_thread::get_id( ); }
@@ -70,10 +70,12 @@ namespace son8::windowed {
         }};
         Impl_( Config const &configInit = { } ) : config{ configInit } {
             if ( not is_main_thread( ) ) throw std::runtime_error( "son8::windowed: Window requires create instances only on main thread" );
-            { static main_thread_::InitGLFW InitGLFW; } // hide `initGLFW` not used outside
+            { static main_thread_::InitGLFW InitGLFW; } // hide `InitGLFW` not used outside
+            // NOTE: check always after `is_main_thread` check, it allow avoid using atomic
+            // \ for global window counting, as window can be created only on 1 main thread
             if ( Max_Count <= GlobalWindowCount_ ) throw std::runtime_error( "son8::windowed: Window requires only one instance per process" );
 
-            if ( config.linger_us( ) > Max_Linger_US ) throw std::runtime_error( "son8::windowed: Config requires that the delay does not exceed 20 milliseconds" );
+            if ( config.linger_us( ) > Max_Linger_US ) throw std::runtime_error( "son8::windowed: Config requires that linger does not exceed 20 milliseconds" );
 
             auto version = config.version( );
             auto major = version >> 16u;
@@ -99,8 +101,10 @@ namespace son8::windowed {
 
             window_ = glfwCreateWindow( config.width( ), config.height( ), config.title( ), nullptr, nullptr );
             if ( not window_ ) throw std::runtime_error( "son::windowed: glfwCreateWindow() failed" );
-
             ++GlobalWindowCount_;
+            // NOTE: for not resizable windows resize immediately
+            // \ to avoid bug on `wayland` tiling window managers
+            glfwSetWindowSize( window_, config.width( ), config.height( ) );
         }
         ~Impl_( ) {
             glfwDestroyWindow( window_ );
