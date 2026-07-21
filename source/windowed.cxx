@@ -14,11 +14,11 @@
 namespace son8::windowed {
     // aliases
     namespace time = std::chrono;
-    using Size = std::size_t;
     using Clock = time::steady_clock;
-    using Thread = std::thread;
-    using Mutex = std::mutex;
     using Lock = std::scoped_lock< std::mutex >;
+    using Mutex = std::mutex;
+    using Size = std::size_t;
+    using Thread = std::thread;
 
     namespace main_thread_ {
 
@@ -58,6 +58,7 @@ namespace son8::windowed {
         static constexpr auto Error_Size = static_cast< unsigned >( Error::Size_ );
     public:
         Config const config;
+        // NOTE: mutex only should be used on `(bind|free)_opengl` method pair
         Mutex /*mutable?*/ swapMutex;
         Thread::id swapThread{ };
         bool is_swap_thread_empty( ) { return swapThread == Thread::id{ }; }
@@ -101,10 +102,12 @@ namespace son8::windowed {
 
             window_ = glfwCreateWindow( config.width( ), config.height( ), config.title( ), nullptr, nullptr );
             if ( not window_ ) throw std::runtime_error( "son::windowed: glfwCreateWindow() failed" );
-            ++GlobalWindowCount_;
             // NOTE: for not resizable windows resize immediately
             // \ to avoid bug on `wayland` tiling window managers
             glfwSetWindowSize( window_, config.width( ), config.height( ) );
+            // NOTE: should be LAST to avoid not correct behavior
+            // \ when adding more stuff to the constructor method
+            ++GlobalWindowCount_;
         }
         ~Impl_( ) {
             glfwDestroyWindow( window_ );

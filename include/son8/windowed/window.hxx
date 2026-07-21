@@ -45,7 +45,7 @@ namespace son8::windowed {
 
         void free_opengl( );
         [[nodiscard]] Error bind_opengl( );
-        // TODO: remove
+        // TODO: remove on version major 1
         [[nodiscard]] [[deprecated("son8::windowed: Window, use bind_opengl instead, this function would be removed!")]]
         Error init_opengl( );
         static bool is_error( Error error ) noexcept;
