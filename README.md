@@ -37,14 +37,14 @@
   - by default created with `VSync` on (not configurable yet)
   - only takes one constructor parameter `Config` which can be omitted (leads to creating window with size `640x360` and `OpenGL` version `4.6 compatibility profile`)
   - public methods:
-    - `init_opengl`: initializing `OpenGL` by making window context current via `glfw` call and loading functions using `glad` loader, throw standard runtime error exception when fail to load
-    - `free_opengl`: free window current context via `glfw` call
+    - `bind_opengl`: mutex protected initializing `OpenGL` by making window context current via `glfw` call and loading functions using `glad` loader, throw standard runtime error exception when fail to load or already bounded
+    - `free_opengl`: mutex protected free window current context via `glfw` call
     - `swap_buffer`: calls `glfw` swap buffer function
     - `poll_events`: calls `glfw` poll events function
     - `close`: set `glfw` window should close to true
     - `is_closing`: checks is window should close via `glfw` call
   - templated `run*` blocking calling thread methods family (accepts callable function with variadic forwarding arguments until `is_closing` requested via `close` call):
-    - `run`: enforce `poll_events` only on main thread, manually calls `init_opengl` before loop and `free_opengl` after loop, and support compile-time feature disabler's:
+    - `run`: enforce `poll_events` only on main thread, manually calls `init_opengl` before loop and `free_opengl` after loop, and support compile-time feature `disabler's`:
       - `Window::Without::Poll_Events`: disable run `poll_events` method
       - `Window::Without::Swap_Buffer`: disable run `swap_buffer` method
       - `Window::Without::Poll_Linger`: disable run private `poll_Linger` method, only works when buffer swapping is skipped

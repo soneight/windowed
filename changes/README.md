@@ -9,6 +9,27 @@
 - aspect ratio and window size configuration
 - wrap input handling
 
+### `v0.6.0` - 2026-07-21
+
+#### Added
+
+- mutex protected `Window::bind_opengl`
+
+#### Changed
+
+- loading `GLAD` `OpenGL` function wrappers only once per application runtime
+- `Window::free_opengl` is now mutex protected
+- deprecated `Window::init_opengl` is now just calls `bind_opengl`
+
+#### Deprecated
+
+- `Window::init_opengl` method in favor of `bind_opengl`
+- `Error_::ReinitOpenGL` enum constant name in favor of `AlreadyBound`
+
+#### Fixed
+
+- on `wayland` tiling window managers incorrect window sizing for fixed (not resizable) windows
+
 ### `v0.5.3` - 2026-07-13
 
 #### Added
@@ -26,7 +47,7 @@
 
 - `Window::Error` enum class, 0 is not an error
 - `is_error` `Window` public method to check is some functions return error
-- private `Window` class method `throw_Error`: that throw exception if input error code was non-zero
+- private `Window` class method `throw_Error`: that throw exception if input error code was not equal zero
 
 #### Changed
 
