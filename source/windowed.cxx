@@ -4,6 +4,7 @@
 #include <glad/son8/loader.h> // `gladLoadGL`
 // `std`
 #include <array>
+#include <cassert> // NOTE: use asserts only for implementation details (so no asserts on public interface)
 #include <cstddef> // `size_t`
 #include <chrono> // `duration`
 #include <iostream> // `cerr`
@@ -127,6 +128,7 @@ namespace son8::windowed {
 
         Error load_opengl( ) const {
             // NOTE: requires `glfwMakeCurrentContext` to be active
+            assert( glfwGetCurrentContext( ) == window_ && "son8::windowed: Window implementation logic error, not an current context" );
             static Error_ loadError = []( ) {
                 if ( gladLoadGL( glfwGetProcAddress ) ) return Error::None;
 
@@ -202,6 +204,7 @@ namespace son8::windowed {
     // window private implementation
     // --
     void Window::if_Error_Throw( Error error ) const {
+        assert( error < Error::Size_ && "son8::windowed: Window::if_Error_Throw implementation logic error code exceed size" );
         if ( not is_error( error ) ) return;
         throw std::runtime_error{ Impl_::ErrorMessages[static_cast< Size >( error )] };
     }
