@@ -9,6 +9,11 @@
 - aspect ratio and window size configuration
 - wrap input handling
 
+### `v0.6.1` - 2026-07-24
+
+#### Added
+> `Window` implementation source includes c asserts with some logic error checks
+
 ### `v0.6.0` - 2026-07-21
 
 #### Added
