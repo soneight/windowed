@@ -9,6 +9,13 @@
 - aspect ratio and window size configuration
 - wrap input handling
 
+### `v0.7.0` - 2026-11-05
+
+#### Changed
+
+- bump `glad::son8` fallback to `v0.0.7`
+- breaking header `glad loader` include
+
 ### `v0.6.1` - 2026-07-24
 
 #### Added
