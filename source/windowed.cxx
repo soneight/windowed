@@ -1,7 +1,10 @@
 #include <son8/windowed.hxx>
 // `son8`
 #include <glfw/son8.hxx> // `GLFWwindow, glfw*`
-#include <glad/son8/loader.h> // `gladLoadGL`
+#if !__has_include(<glad/son8/gl/loader.h>)
+#   error "missing dependency after moved glad son8 headers: update son8::overglad library version"
+#endif
+#include <glad/son8/gl/loader.h> // `gladLoadGL`
 // `std`
 #include <array>
 #include <cassert> // NOTE: use asserts only for implementation details (so no asserts on public interface)
