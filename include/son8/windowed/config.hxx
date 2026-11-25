@@ -6,6 +6,25 @@
 #include <utility>
 
 namespace son8::windowed {
+
+    using ModeVeiled = unsigned;
+
+    constexpr ModeVeiled Mode_Veiled_Full_Bit = 1u << 0u;
+    constexpr ModeVeiled Mode_Veiled_Fluid_Bit = 1u << 1u;
+    constexpr ModeVeiled Mode_Veiled_Square_Bit = 1u << 2u;
+
+
+    enum class Mode : ModeVeiled {
+        Oblong_Fixed_Desk = 0u,
+        Oblong_Fixed_Full = Mode_Veiled_Full_Bit,
+        Oblong_Fluid_Desk = Mode_Veiled_Fluid_Bit,
+        Oblong_Fluid_Full = Mode_Veiled_Fluid_Bit | Mode_Veiled_Full_Bit,
+        Square_Fixed_Desk = Mode_Veiled_Square_Bit,
+        Square_Fixed_Full = Mode_Veiled_Square_Bit | Mode_Veiled_Full_Bit,
+        Square_Fluid_Desk = Mode_Veiled_Square_Bit | Mode_Veiled_Fluid_Bit,
+        Square_Fluid_Full = Mode_Veiled_Square_Bit | Mode_Veiled_Fluid_Bit | Mode_Veiled_Full_Bit
+    };
+
     enum class OpenGL : unsigned {
         Vx010100 = 0x010100u,
         Vx010500 = 0x010500u,
