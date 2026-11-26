@@ -3,6 +3,7 @@
 // son8
 #include <son8/windowed/config.hxx> // Config
 // std
+#include <cstdint>
 #include <utility> // forward
 
 // forward declarations
@@ -19,6 +20,37 @@ namespace son8::windowed {
             LoadGlad,
             Size_
         };
+        class Frame_ final {
+            using Unt1 = std::uint16_t;
+            Unt1 dw_;
+            Unt1 dh_;
+            Unt1 uw_;
+            Unt1 uh_;
+        public:
+            Frame_( ) = default;
+            Frame_( Unt1 drawW, Unt1 drawH, Unt1 userW, Unt1 userH )
+            : dw_{ drawW }, dh_{ drawH }, uw_{ userW }, uh_{ userH }   {}
+            auto draw_w( ) const noexcept -> Unt1 { return dw_; }
+            auto draw_h( ) const noexcept -> Unt1 { return dh_; }
+            auto user_w( ) const noexcept -> Unt1 { return uw_; }
+            auto user_h( ) const noexcept -> Unt1 { return uh_; }
+            auto user_x( ) const noexcept -> Unt1 { return static_cast< Unt1 >(( draw_w( ) - user_w( )) / 2u ); }
+            template< bool Is_Top_Left = false >
+            auto user_y( ) const noexcept -> Unt1 {
+                constexpr Unt1 adjust = ( Is_Top_Left ) ? 1u : 0u;
+                return static_cast< Unt1 >(( draw_h( ) - user_h( ) + adjust ) / 2u );
+            }
+            explicit operator bool( ) const noexcept { return draw_w( ) and draw_h( ); }
+            bool operator==( Frame_ other ) const noexcept {
+                return dw_ == other.dw_
+                   and dh_ == other.dh_
+                   and uw_ == other.uw_
+                   and uh_ == other.uh_;
+            }
+            bool operator!=( Frame_ other ) const noexcept { return not ( *this == other ); }
+        };
+        static_assert( sizeof( Frame_ ) == 8u
+            , "son8::windowed: Frame size required to be 8 to pack it into 64-bit atomic integer" );
         void check_Poll_Main_Thread( ) const;
         long long poll_Linger_Start( ) const;
         void poll_Linger_Until( long long startTime ) const;
@@ -28,6 +60,7 @@ namespace son8::windowed {
         static constexpr bool is_Poll_Linger( unsigned flags ) { return ~flags & Without::Poll_Linger; }
     public:
         using Error = Error_;
+        using Frame = Frame_;
         Window( Config const &config = { });
         ~Window( );
         Window( Window && ) = delete;
@@ -49,6 +82,7 @@ namespace son8::windowed {
         [[nodiscard]] [[deprecated("son8::windowed: Window, use bind_opengl instead, this function would be removed!")]]
         Error init_opengl( );
         static bool is_error( Error error ) noexcept;
+        auto frame( ) const -> Frame;
         bool is_closing( ) const;
         void poll_events( ) const;
         void swap_buffer( ) const;

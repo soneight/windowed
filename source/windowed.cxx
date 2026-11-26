@@ -3,7 +3,7 @@
 #include <glfw/son8.hxx> // `GLFWwindow, glfw*`
 // TODO: remove this header check on release `v1.0`
 #if !__has_include(<glad/son8/gl/loader.h>)
-#   error "missing dependency after moved glad son8 headers: update son8::overglad library version"
+#   error "missing dependency after moved glad son8 headers: update son8::overglad andor glad::son8 library version"
 #endif
 #include <glad/son8/gl/loader.h> // `gladLoadGL`
 // `std`
@@ -59,13 +59,59 @@ namespace son8::windowed {
             }
         };
         std::optional< InitGLFW > initGLFW_;
-        bool isCachedGLAD_;
         GLFWwindow *window_;
+        bool isCachedGLAD_{ };
         static constexpr Size Max_Count = 1u;
         static constexpr auto Max_Linger_US = 20'000u;
         static constexpr auto Max_Viewport_Size = 8192u;
         static constexpr auto Error_Size = static_cast< unsigned >( Error::Size_ );
     public:
+        static auto frame_pack( Frame frame ) noexcept {
+            constexpr auto chunk = []( uint16_t value, unsigned shift ) {
+                return static_cast< std::uint64_t >( value ) << shift;
+            };
+            return chunk( frame.draw_w( ), 48u )
+                 | chunk( frame.draw_h( ), 32u )
+                 | chunk( frame.user_w( ), 16u )
+                 | chunk( frame.user_h( ), 0u );
+        }
+        void frame_update( int w, int h ) {
+            if ( w <= 0 || h <= 0 ) {
+                framePacked_.store( 0u, std::memory_order_relaxed );
+                return;
+            }
+
+            auto const area = config.area( );
+            int userW = 0, userH = 0;
+
+            auto fit_fluid = [&]{
+                if ( area.is_square( )) {
+                    int side = std::min( w, h );
+                    userW = side;
+                    userH = side;
+                } else {
+                    if ( w * 9 > h * 16 ) {
+                        userW = ( h * 16 ) / 9;
+                        userH = h;
+                    } else {
+                        userW = w;
+                        userH = ( w * 9 ) / 16;
+                    }
+                }
+            };
+
+            if ( area.is_fluid( )) {
+                fit_fluid( );
+            } else{
+                // TODO
+                userW = w;
+                userH = h;
+            }
+
+            Frame frame( w, h, userW, userH );
+            framePacked_.store( frame_pack( frame ), std::memory_order_relaxed );
+        }
+        std::atomic< std::uint64_t > framePacked_;
         Config const config;
         std::atomic< bool > isClosing{ };
         // NOTE: mutex only should be used on `(bind|free)_opengl` method pair
@@ -93,12 +139,6 @@ namespace son8::windowed {
                 throw std::runtime_error{ "son8::windowed: Config requires that linger does not exceed 20 milliseconds" };
             }
 
-            bool isValidRect = config.width( ) <= Max_Viewport_Size and config.height( ) <= Max_Viewport_Size;
-
-            if ( not isValidRect ) {
-                throw std::runtime_error{ "son8::windowed: Config requires width and height not exceed 8192 value in any dimension" };
-            }
-
             auto version = config.version( );
             auto major = static_cast< int >( version >> 16u );
 
@@ -115,9 +155,9 @@ namespace son8::windowed {
             }
 
             initGLFW_.emplace( );
-
             // NOTE: important to clear hints
             glfwDefaultWindowHints( );
+            // OpenGL related hints
         #ifndef NDEBUG
             constexpr bool Auto_Debug_GL = true;
         #else
@@ -132,8 +172,6 @@ namespace son8::windowed {
             glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, isDebugContext );
             glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, major );
             glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, minor );
-            glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
-
             auto profile_hint = []( auto val ) { glfwWindowHint( GLFW_OPENGL_PROFILE, val ); };
 
             switch ( version & 0xFFu ) {
@@ -144,17 +182,75 @@ namespace son8::windowed {
                     throw std::runtime_error{ "son8::windowed: Config requires valid OpenGL profile, one of [00,CB,CE]" };
                 }
             }
+            // window size related hints
+            int wh = 0, ht = 0;
+            auto process_area = [this,&wh,&ht]{
+                auto area = config.area( );
 
-            auto cfgW = static_cast< int >( config.width( ));
-            auto cfgH = static_cast< int >( config.height( ));
-            window_ = glfwCreateWindow( cfgW, cfgH, config.title( ), nullptr, nullptr );
+                struct Mult { int w, h; };
+                auto mult = area.is_square( ) ? Mult{ 24, 24 } : Mult{32, 18 };
 
-            if ( not window_ ) {
-                throw std::runtime_error{ "son::windowed: glfwCreateWindow() failed" };
+                unsigned units = area.units ? area.units : 256u;
+                unsigned extra = area.extra;
+
+                wh = static_cast< int >( units * mult.w + extra * mult.w );
+                ht = static_cast< int >( units * mult.h + extra * mult.h );
+            };
+            auto process_wh = [this,&wh,&ht]{
+                bool isValidRect = config.width( ) <= Max_Viewport_Size and config.height( ) <= Max_Viewport_Size;
+
+                if ( not isValidRect ) {
+                    throw std::runtime_error{ "son8::windowed: Config requires width and height not exceed 8192 value in any dimension" };
+                }
+
+                wh = static_cast< int >( config.width( ));
+                ht = static_cast< int >( config.height( ));
+                glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
+            };
+            auto process_area_and_wh = []{ throw std::runtime_error{ "son8::windowed: Config requires to not use Width and Height when Area is used" }; };
+            unsigned tempAreaWH = ( config.is_used_area( ) << 0u ) | ( config.is_used_wh( ) << 1u );
+
+            switch ( tempAreaWH ) {
+            case 0u: [[fallthrough]];
+            case 1u: { process_area( ); } break;
+            case 2u: { process_wh( ); } break;
+            case 3u: { process_area_and_wh( ); } break;
+                default: {
+                    break;
+                }
             }
-            // NOTE: for not resizable windows resize immediately
-            // \ to avoid bug on `wayland` tiling window managers
-            glfwSetWindowSize( window_, cfgW, cfgH );
+
+            if ( not config.area( ).is_fluid( )) { glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE ); }
+
+            if ( config.area( ).is_full( )) {
+                auto monitorGLFW = glfwGetPrimaryMonitor( );
+                auto modeGLFW = glfwGetVideoMode( monitorGLFW );
+                glfwWindowHint(GLFW_RED_BITS, modeGLFW->redBits);
+                glfwWindowHint(GLFW_GREEN_BITS, modeGLFW->greenBits);
+                glfwWindowHint(GLFW_BLUE_BITS, modeGLFW->blueBits);
+                glfwWindowHint(GLFW_REFRESH_RATE, modeGLFW->refreshRate);
+                glfwWindowHint(GLFW_DECORATED, GLFW_FALSE );
+                glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // avoid minimizing on focus loss / alt-tab
+
+                window_ = glfwCreateWindow( modeGLFW->width, modeGLFW->height, config.title( ), monitorGLFW, nullptr );
+                if ( not window_ ) { throw std::runtime_error{ "son::windowed: glfwCreateWindow() in full mode failed" }; }
+            } else {
+                window_ = glfwCreateWindow( wh, ht, config.title( ), nullptr, nullptr );
+                if ( not window_ ) { throw std::runtime_error{ "son::windowed: glfwCreateWindow() in desk mode failed" }; }
+                // NOTE: for not resizable windows resize immediately
+                // \ to avoid bug on `wayland` tiling window managers
+                glfwSetWindowSize( window_, wh, ht );
+            }
+
+            glfwSetWindowUserPointer(window_, this);
+            glfwSetFramebufferSizeCallback( window_, []( GLFWwindow *win, int w, int h ) {
+                auto *self = static_cast<Impl_ *>( glfwGetWindowUserPointer(win));
+                self->frame_update(w, h);
+            });
+            // NOTE: GLFW does NOT always callback on initial creation
+            int w = 0, h = 0;
+            glfwGetFramebufferSize( window_, &w, &h );
+            frame_update(w, h);
             // NOTE: should be LAST to avoid not correct behavior
             // \ when adding more stuff to the constructor method
             ++GlobalWindowCount_;
@@ -196,6 +292,19 @@ namespace son8::windowed {
 
     Window::operator GLFWwindow *( ) const {
         return impl_->window( );
+    }
+
+    auto Window::frame( ) const -> Frame {
+        auto bits = impl_->framePacked_.load(std::memory_order_relaxed);
+        auto chunk = [&]( unsigned shift ) {
+            return static_cast< std::uint16_t >(( bits >> shift ) & 0xFFFFu );
+        };
+        return Frame{
+            chunk( 48u ),
+            chunk( 32u ),
+            chunk( 16u ),
+            chunk( 0u )
+        };
     }
 
     void Window::free_opengl( ) {
