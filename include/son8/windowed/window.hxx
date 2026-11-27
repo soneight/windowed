@@ -37,11 +37,7 @@ namespace son8::windowed {
             auto user_h( ) const noexcept { return uh_; }
             auto user_extent( ) const noexcept { return Config::Extent{ uw_, uh_ }; }
             auto user_x( ) const noexcept { return static_cast< Unt1 >(( draw_w( ) - user_w( )) / 2u ); }
-            template< bool Is_Top_Left = false >
-            auto user_y( ) const noexcept {
-                constexpr Unt1 adjust = ( Is_Top_Left ) ? 1u : 0u;
-                return static_cast< Unt1 >(( draw_h( ) - user_h( ) + adjust ) / 2u );
-            }
+            auto user_y( ) const noexcept { return static_cast< Unt1 >(( draw_h( ) - user_h( )) / 2u ); }
             explicit operator bool( ) const noexcept { return draw_w( ) and draw_h( ); }
             bool operator==( Frame_ other ) const noexcept {
                 return dw_ == other.dw_
