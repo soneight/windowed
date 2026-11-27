@@ -46,7 +46,7 @@ namespace son8::windowed {
             bool is_fluid( ) const noexcept { return veiled( ) & Mode_Veiled_Fluid_Bit; }
             bool is_square( ) const noexcept { return veiled( ) & Mode_Veiled_Square_Bit; }
             Mode_( ) = default;
-            Mode_( windowed::Mode mode ) : mode{ mode } { }
+            Mode_( windowed::Mode init ) : mode{ init } { }
         } mode_;
         struct Extent_ {
             using Type_ = std::uint16_t;
@@ -55,12 +55,12 @@ namespace son8::windowed {
         } extent_;
         struct Width_ final {
             using Type_ = typename Extent_::Type_;
-            Type_ value{ 640u };
+            Type_ value{ };
             operator Type_( ) const noexcept { return value; }
         };
         struct Height_ final {
             using Type_ = typename Extent_::Type_;
-            Type_ value{ 360u };
+            Type_ value{ };
             operator Type_( ) const noexcept { return value; }
         };
         struct Title_ final {
@@ -73,7 +73,7 @@ namespace son8::windowed {
             Version_( unsigned version ) noexcept : value{ version } { }
             Version_( OpenGL version ) noexcept : value{ static_cast< unsigned >( version )} { }
             Version_( unsigned major, unsigned minor, std::optional< bool > compat = std::nullopt ) noexcept
-            : value{ ( major << 16 ) | ( minor << 8 ) | ( compat ? ( compat.value( ) ? 0xCBu : 0xCEu ) : 0x0u )}
+            : value{ ( major << 16u ) | ( minor << 8u ) | ( compat ? ( compat.value( ) ? 0xCBu : 0xCEu ) : 0x0u )}
             { }
             operator unsigned( ) const noexcept { return value; }
         } version_;
@@ -87,8 +87,6 @@ namespace son8::windowed {
         } debugGL_;
         using Copy_ = Config const &;
         using Move_ = Config &&;
-        // temporary
-        bool isUsedWH_{ };
     public:
         using Mode = Mode_;
         using Extent = Extent_;
