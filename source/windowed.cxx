@@ -66,6 +66,21 @@ namespace son8::windowed {
         static constexpr auto Max_Viewport_Size = 8192u;
         static constexpr auto Error_Size = static_cast< unsigned >( Error::Size_ );
     public:
+        std::atomic< std::uint64_t > framePacked_;
+        Config const config;
+        std::atomic< bool > isClosing{ };
+        // NOTE: mutex only should be used on `(bind|free)_opengl` method pair
+        Mutex /*mutable?*/ swapMutex;
+        Thread::id swapThread{ };
+
+        bool is_swap_thread_empty( ) { return swapThread == Thread::id{ }; }
+        bool is_swap_thread_equal( ) { return swapThread == std::this_thread::get_id( ); }
+
+        static constexpr std::array< char const *, Error_Size > ErrorMessages{{
+            "son8::windowed: Window - Not an error",
+            "son8::windowed: Window - Context is already bound, maybe try to `free_opengl` method before calling `run*` method family",
+            "son8::windowed: Window - Load glad failed",
+        }};
         static auto frame_pack( Frame frame ) noexcept {
             constexpr auto chunk = []( uint16_t value, unsigned shift ) {
                 return static_cast< std::uint64_t >( value ) << shift;
@@ -81,50 +96,41 @@ namespace son8::windowed {
                 return;
             }
 
-            auto const area = config.area( );
+            auto const mode = config.mode( );
+            auto const extent = config.extent( );
             int userW = 0, userH = 0;
 
-            auto fit_fluid = [&]{
-                if ( area.is_square( )) {
-                    int side = std::min( w, h );
+            int maxW = w, maxH = h;
+
+            if ( not mode.is_fluid( )) {
+                bool isDefault = extent.w == 0u || extent.h == 0u;
+                int reqW = isDefault ? ( mode.is_square( ) ? 480 : 640 ) : static_cast< int >( extent.w );
+                int reqH = isDefault ? ( mode.is_square( ) ? 480 : 360 ) : static_cast< int >( extent.h );
+                maxW = std::min( w, reqW );
+                maxH = std::min( h, reqH );
+            }
+
+            if ( mode.is_square( )) {
+                int side = std::min( maxW, maxH );
+                if ( side >= 12 ) {
                     userW = side;
                     userH = side;
-                } else {
-                    if ( w * 9 > h * 16 ) {
-                        userW = ( h * 16 ) / 9;
-                        userH = h;
-                    } else {
-                        userW = w;
-                        userH = ( w * 9 ) / 16;
-                    }
                 }
-            };
-
-            if ( area.is_fluid( )) {
-                fit_fluid( );
-            } else{
-                // TODO
-                userW = w;
-                userH = h;
+            } else {
+                if ( maxW * 9 > maxH * 16 ) {
+                    userW = ( maxH * 16 ) / 9;
+                    userH = maxH;
+                } else {
+                    userW = maxW;
+                    userH = ( maxW * 9 ) / 16;
+                }
             }
+
+            if ( not userW or not userH ) { userW = userH = 0; }
 
             Frame frame( w, h, userW, userH );
             framePacked_.store( frame_pack( frame ), std::memory_order_relaxed );
         }
-        std::atomic< std::uint64_t > framePacked_;
-        Config const config;
-        std::atomic< bool > isClosing{ };
-        // NOTE: mutex only should be used on `(bind|free)_opengl` method pair
-        Mutex /*mutable?*/ swapMutex;
-        Thread::id swapThread{ };
-        bool is_swap_thread_empty( ) { return swapThread == Thread::id{ }; }
-        bool is_swap_thread_equal( ) { return swapThread == std::this_thread::get_id( ); }
-
-        static constexpr std::array< char const *, Error_Size > ErrorMessages{{
-            "son8::windowed: Window - Not an error",
-            "son8::windowed: Window - Context is already bound, maybe try to `free_opengl` method before calling `run*` method family",
-            "son8::windowed: Window - Load glad failed",
-        }};
         Impl_( Config const &configInit = { }) : config{ configInit } {
             if ( not is_main_thread( )) {
                 throw std::runtime_error{ "son8::windowed: Window requires create instances only on main thread" };
@@ -183,63 +189,62 @@ namespace son8::windowed {
                 }
             }
             // window size related hints
-            int wh = 0, ht = 0;
-            auto process_area = [this,&wh,&ht]{
-                auto area = config.area( );
+            int width = 0, height = 0;
+            auto process_extent = [this,&width,&height]{
+                auto mode = config.mode( );
+                auto extent = config.extent( );
+                bool isValidExtent = extent.w <= Max_Viewport_Size and extent.h <= Max_Viewport_Size;
 
-                struct Mult { int w, h; };
-                auto mult = area.is_square( ) ? Mult{ 24, 24 } : Mult{32, 18 };
-
-                unsigned units = area.units ? area.units : 256u;
-                unsigned extra = area.extra;
-
-                wh = static_cast< int >( units * mult.w + extra * mult.w );
-                ht = static_cast< int >( units * mult.h + extra * mult.h );
-            };
-            auto process_wh = [this,&wh,&ht]{
-                bool isValidRect = config.width( ) <= Max_Viewport_Size and config.height( ) <= Max_Viewport_Size;
-
-                if ( not isValidRect ) {
-                    throw std::runtime_error{ "son8::windowed: Config requires width and height not exceed 8192 value in any dimension" };
+                if ( not isValidExtent ) {
+                    throw std::runtime_error{ "son8::windowed: Config requires Extent not exceed 8192 value in any dimension" };
                 }
 
-                wh = static_cast< int >( config.width( ));
-                ht = static_cast< int >( config.height( ));
-                glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
-            };
-            auto process_area_and_wh = []{ throw std::runtime_error{ "son8::windowed: Config requires to not use Width and Height when Area is used" }; };
-            unsigned tempAreaWH = ( config.is_used_area( ) << 0u ) | ( config.is_used_wh( ) << 1u );
-
-            switch ( tempAreaWH ) {
-            case 0u: [[fallthrough]];
-            case 1u: { process_area( ); } break;
-            case 2u: { process_wh( ); } break;
-            case 3u: { process_area_and_wh( ); } break;
-                default: {
-                    break;
+                switch ((( extent.w == 0 ) << 1u ) | (extent.h == 0u )) {
+                case 0b00u: { } break;
+                case 0b01u: [[fallthrough]];
+                case 0b10u: { throw std::runtime_error{ "son8::windowed: Config requires Extent width and height both be zero or non-zero" }; } break;
+                    default: {
+                        extent = ( mode.is_square( )) ? Config::Extent{ 480u, 480u } : Config::Extent{ 640u, 360u };
+                    }
                 }
+
+                width = static_cast< int >( extent.w );
+                height = static_cast< int >( extent.h );
+            };
+
+            process_extent( );
+
+            if ( not config.mode( ).is_fluid( )) { glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE ); }
+
+            bool isFullSuccess = config.mode( ).is_full( );
+
+            if ( isFullSuccess ) {
+                auto try_full = [this] {
+                    auto monitorGLFW = glfwGetPrimaryMonitor( );
+                    if ( not monitorGLFW ) { return false; }
+                    auto modeGLFW = glfwGetVideoMode( monitorGLFW );
+                    if ( not modeGLFW ) { return false; }
+                    glfwWindowHint(GLFW_RED_BITS, modeGLFW->redBits);
+                    glfwWindowHint(GLFW_GREEN_BITS, modeGLFW->greenBits);
+                    glfwWindowHint(GLFW_BLUE_BITS, modeGLFW->blueBits);
+                    glfwWindowHint(GLFW_REFRESH_RATE, modeGLFW->refreshRate);
+                    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE );
+                    glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // avoid minimizing on focus loss / alt-tab
+
+                    window_ = glfwCreateWindow( modeGLFW->width, modeGLFW->height, config.title( ), monitorGLFW, nullptr );
+
+                    if ( not window_ ) { throw std::runtime_error{ "son::windowed: glfwCreateWindow() in full mode failed" }; }
+                    return true;
+                };
+                if ( not try_full( )) { isFullSuccess = false; }
             }
 
-            if ( not config.area( ).is_fluid( )) { glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE ); }
-
-            if ( config.area( ).is_full( )) {
-                auto monitorGLFW = glfwGetPrimaryMonitor( );
-                auto modeGLFW = glfwGetVideoMode( monitorGLFW );
-                glfwWindowHint(GLFW_RED_BITS, modeGLFW->redBits);
-                glfwWindowHint(GLFW_GREEN_BITS, modeGLFW->greenBits);
-                glfwWindowHint(GLFW_BLUE_BITS, modeGLFW->blueBits);
-                glfwWindowHint(GLFW_REFRESH_RATE, modeGLFW->refreshRate);
-                glfwWindowHint(GLFW_DECORATED, GLFW_FALSE );
-                glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // avoid minimizing on focus loss / alt-tab
-
-                window_ = glfwCreateWindow( modeGLFW->width, modeGLFW->height, config.title( ), monitorGLFW, nullptr );
-                if ( not window_ ) { throw std::runtime_error{ "son::windowed: glfwCreateWindow() in full mode failed" }; }
-            } else {
-                window_ = glfwCreateWindow( wh, ht, config.title( ), nullptr, nullptr );
+            if ( not isFullSuccess ) {
+                window_ = glfwCreateWindow( width, height, config.title( ), nullptr, nullptr );
                 if ( not window_ ) { throw std::runtime_error{ "son::windowed: glfwCreateWindow() in desk mode failed" }; }
                 // NOTE: for not resizable windows resize immediately
                 // \ to avoid bug on `wayland` tiling window managers
-                glfwSetWindowSize( window_, wh, ht );
+                glfwSetWindowSize( window_, width, height );
             }
 
             glfwSetWindowUserPointer(window_, this);
@@ -248,9 +253,8 @@ namespace son8::windowed {
                 self->frame_update(w, h);
             });
             // NOTE: GLFW does NOT always callback on initial creation
-            int w = 0, h = 0;
-            glfwGetFramebufferSize( window_, &w, &h );
-            frame_update(w, h);
+            glfwGetFramebufferSize( window_, &width, &height );
+            frame_update(width, height);
             // NOTE: should be LAST to avoid not correct behavior
             // \ when adding more stuff to the constructor method
             ++GlobalWindowCount_;

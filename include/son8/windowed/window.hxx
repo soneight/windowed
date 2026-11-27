@@ -22,21 +22,23 @@ namespace son8::windowed {
         };
         class Frame_ final {
             using Unt1 = std::uint16_t;
-            Unt1 dw_;
-            Unt1 dh_;
-            Unt1 uw_;
-            Unt1 uh_;
+            Unt1 dw_{ };
+            Unt1 dh_{ };
+            Unt1 uw_{ };
+            Unt1 uh_{ };
         public:
             Frame_( ) = default;
             Frame_( Unt1 drawW, Unt1 drawH, Unt1 userW, Unt1 userH )
-            : dw_{ drawW }, dh_{ drawH }, uw_{ userW }, uh_{ userH }   {}
-            auto draw_w( ) const noexcept -> Unt1 { return dw_; }
-            auto draw_h( ) const noexcept -> Unt1 { return dh_; }
-            auto user_w( ) const noexcept -> Unt1 { return uw_; }
-            auto user_h( ) const noexcept -> Unt1 { return uh_; }
-            auto user_x( ) const noexcept -> Unt1 { return static_cast< Unt1 >(( draw_w( ) - user_w( )) / 2u ); }
+            : dw_{ drawW }, dh_{ drawH }, uw_{ userW }, uh_{ userH } { }
+            auto draw_w( ) const noexcept { return dw_; }
+            auto draw_h( ) const noexcept { return dh_; }
+            auto draw_extent( ) const noexcept { return Config::Extent{ dw_, dh_ }; }
+            auto user_w( ) const noexcept { return uw_; }
+            auto user_h( ) const noexcept { return uh_; }
+            auto user_extent( ) const noexcept { return Config::Extent{ uw_, uh_ }; }
+            auto user_x( ) const noexcept { return static_cast< Unt1 >(( draw_w( ) - user_w( )) / 2u ); }
             template< bool Is_Top_Left = false >
-            auto user_y( ) const noexcept -> Unt1 {
+            auto user_y( ) const noexcept {
                 constexpr Unt1 adjust = ( Is_Top_Left ) ? 1u : 0u;
                 return static_cast< Unt1 >(( draw_h( ) - user_h( ) + adjust ) / 2u );
             }
@@ -93,11 +95,9 @@ namespace son8::windowed {
             if constexpr ( is_Poll_Events( without )) { check_Poll_Main_Thread( ); }
 
             if constexpr ( is_Swap_Buffer( without )) { if_Error_Throw( bind_opengl( )); }
-
             // NOTE: lingering make only sense when there is none
             // \ buffer swapping involved and after user callback
             static constexpr bool Is_Linger_Active = not is_Swap_Buffer( without ) and is_Poll_Events( without ) and is_Poll_Linger( without );
-
             // NOTE: intentionally do NOT `std::forward` `callback` andor `args` here
             // \ because of the loop calls
             while ( not is_closing( )) {

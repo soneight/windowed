@@ -8,7 +8,7 @@
 
 namespace son8::windowed {
 
-    using ModeVeiled = std::uint16_t;
+    using ModeVeiled = std::uint8_t;
 
     constexpr ModeVeiled Mode_Veiled_Full_Bit = 1u << 0u;
     constexpr ModeVeiled Mode_Veiled_Fluid_Bit = 1u << 1u;
@@ -39,36 +39,30 @@ namespace son8::windowed {
     }; // enum class OpenGL
 
     class Config final {
-        struct Area_ {
-            using Byte_ = std::uint8_t;
-            static constexpr Byte_ Default_Units = 20u;
-            static constexpr Byte_ Default_Extra = 0u;
-            Mode mode{ };
-            // IDEA: making default pixel size for 1unit as 32x18 (oblong) and 24x24 (square)
-            // \ make maximum values (0=256 units_ and 0=256 extra_) to create window
-            // \ with gui only 8192x4608 (oblong) and 6144x6144 (square)
-            // \ satisfying maximum requirement of 8192 dimension size
-            // \ and internal value 1 byte types that can never bypass max size by design
-            // \ this maximum requirement applied only to user area (GUI)
-            Byte_ units{ Default_Units }; // minumum window requirement on creation, 0 is 256
-            Byte_ extra{ Default_Extra };
-            Area_( ) = default;
-            Area_( Mode mode_, Byte_ units_ = Default_Units, Byte_ extra_ = Default_Extra )
-            : mode{ mode_ }, units{ units_ }, extra{ extra_ } {  }
+        struct Mode_ {
+            windowed::Mode mode{ windowed::Mode::Oblong_Fixed_Desk };
             auto veiled( ) const noexcept { return static_cast< ModeVeiled >( mode ); }
             bool is_full( ) const noexcept { return veiled( ) & Mode_Veiled_Full_Bit; }
             bool is_fluid( ) const noexcept { return veiled( ) & Mode_Veiled_Fluid_Bit; }
             bool is_square( ) const noexcept { return veiled( ) & Mode_Veiled_Square_Bit; }
-        } area_;
-        static_assert( sizeof( Area_ ) == 4u );
+            Mode_( ) = default;
+            Mode_( windowed::Mode mode ) : mode{ mode } { }
+        } mode_;
+        struct Extent_ {
+            using Type_ = std::uint16_t;
+            Type_ w{ };
+            Type_ h{ };
+        } extent_;
         struct Width_ final {
-            unsigned value{ 640u };
-            operator unsigned( ) const noexcept { return value; }
-        } width_;
+            using Type_ = typename Extent_::Type_;
+            Type_ value{ 640u };
+            operator Type_( ) const noexcept { return value; }
+        };
         struct Height_ final {
-            unsigned value{ 360u };
-            operator unsigned( ) const noexcept { return value; }
-        } height_;
+            using Type_ = typename Extent_::Type_;
+            Type_ value{ 360u };
+            operator Type_( ) const noexcept { return value; }
+        };
         struct Title_ final {
             std::string value{ };
             operator char const *( ) const noexcept { return value.c_str( ); }
@@ -94,12 +88,12 @@ namespace son8::windowed {
         using Copy_ = Config const &;
         using Move_ = Config &&;
         // temporary
-        bool isUsedArea_{ };
         bool isUsedWH_{ };
     public:
-        using Area = Area_;
-        using Width [[deprecated("son8::windowed: use Config Area instead")]] = Width_;
-        using Height [[deprecated("son8::windowed: user Config Area instead")]] = Height_;
+        using Mode = Mode_;
+        using Extent = Extent_;
+        using Width = Width_;
+        using Height = Height_;
         using Title = Title_;
         using Version = Version_;
         using LingerUS = Linger_;
@@ -114,24 +108,23 @@ namespace son8::windowed {
         Config &operator=( Copy_ ) = default;
         Config &operator=( Move_ ) = default;
         // setters
-        Config &set( Area area ) { area_ = area; isUsedArea_ = true; return *this; }
-        Config &set( Width_ width) { width_ = width; isUsedWH_ = true; return *this; }
-        Config &set( Height_ height) { height_ = height; isUsedWH_ = true; return *this; }
+        Config &set( Mode mode ) { mode_ = mode; return *this; }
+        Config &set( Extent extent ) { extent_ = extent; return *this; }
+        Config &set( Width width) { extent_.w = width; return *this; }
+        Config &set( Height height) { extent_.h = height; return *this; }
         Config &set( Title title) { title_ = std::move( title ); return *this; }
         Config &set( Version version ) { version_ = version; return *this; }
         Config &set( LingerUS lingerUS ) { linger_ = lingerUS; return *this; }
         Config &set( DebugGL debugGL ) { debugGL_ = debugGL; return *this; }
         // getters
-        auto area( ) const { return area_; }
-        auto width( ) const { return width_; }
-        auto height( ) const { return height_; }
+        auto mode( ) const { return mode_; }
+        auto extent( ) const { return extent_; }
+        auto width( ) const { return extent_.w; }
+        auto height( ) const { return extent_.h; }
         auto title( ) const { return title_; }
         auto version( ) const { return version_; }
         auto linger_us( ) const { return linger_; }
         auto debug_gl( ) const { return debugGL_; }
-        // -- temporary
-        auto is_used_area( ) const { return isUsedArea_; }
-        auto is_used_wh( ) const { return isUsedWH_; }
     }; // class Config
 } // namespace son8::windowed
 
